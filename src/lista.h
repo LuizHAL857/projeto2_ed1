@@ -23,7 +23,7 @@ void insereLista(Lista l, Conteudo n);
 
 /// @brief remove a celula do inicio da lista
 /// @param l Lista l
-void removeInicioLista(Lista l);
+void* removeInicioLista(Lista l);
 
 /// @brief retorna o conteudo da celula inicio da lista
 /// @param l Lista l
@@ -71,5 +71,28 @@ bool searchAndRemoveLista(Lista lista, Conteudo chave);
 /// @param alvo Celula a ser removida
 /// @param anterior Celula anterior a ela
 void removeCelula(Lista lista, Celula alvo, Celula anterior);
+
+/**
+ * @brief Insere um novo elemento no final da lista.
+ *
+ * Esta função cria uma nova célula com o conteúdo informado e a insere
+ * no final da lista simplesmente encadeada. Caso a lista esteja vazia,
+ * o novo elemento passa a ser o primeiro da lista.
+ *
+ * @param l Ponteiro para a lista onde o elemento será inserido.
+ * @param chave Conteúdo a ser armazenado na nova célula.
+ */
+void insereFinalLista(Lista l, Conteudo chave);
+
+/**
+ * @brief Verifica se a lista está vazia.
+ *
+ * Esta função retorna verdadeiro caso a lista não contenha nenhuma célula,
+ * ou seja, se o ponteiro para o início for NULL ou se o tamanho for igual a zero.
+ *
+ * @param l Ponteiro para a lista que será verificada.
+ * @return true se a lista estiver vazia, false caso contrário.
+ */
+bool listaVazia(Lista l);
 
 #endif

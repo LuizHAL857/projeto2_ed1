@@ -43,14 +43,24 @@ Celula getInicioLista(Lista l) {
     return ((stLista*)l)->inicio;
 }
 
-void removeInicioLista(Lista l) {
-    if(l == NULL || ((stLista*)l)->inicio == NULL) return;
+void* removeInicioLista(Lista l) {
+    if (l == NULL) return NULL;
 
-    Celula aux = ((stLista*)l)->inicio;
-    ((stLista*)l)->inicio = ((stLista*)l)->inicio->prox;
+    stLista *lista = (stLista*)l;
+
+    if (lista->inicio == NULL) return NULL;   // lista vazia
+
+    stCelula *aux = lista->inicio;
+    Conteudo c = aux->chave;
+
+    lista->inicio = aux->prox;
+
     free(aux);
-    ((stLista*)l)->tam--;
+    lista->tam--;
+
+    return c;
 }
+
 
 int getTamanhoLista(Lista l) {
     return ((stLista*)l)->tam;
@@ -126,6 +136,30 @@ void removeCelula(Lista lista, Celula alvo, Celula anterior) {
 
 }
 
+void insereFinalLista(Lista l, Conteudo chave) {
+    stCelula *novo = malloc(sizeof(stCelula));
+    novo->chave = chave;
+    novo->prox = NULL;
+
+    // Se a lista está vazia
+    if (((stLista*)l)->inicio == NULL) {
+        ((stLista*)l)->inicio = novo;
+    } else {
+        // Percorre até o último
+        stCelula *aux = ((stLista*)l)->inicio;
+        while (aux->prox != NULL) {
+            aux = aux->prox;
+        }
+        aux->prox = novo;
+    }
+
+    ((stLista*)l)->tam++;
+}
 
 
+
+bool listaVazia(Lista l) {
+    if (l == NULL) return true;
+    return (((stLista*)l)->inicio == NULL || ((stLista*)l)->tam == 0);
+}
 
