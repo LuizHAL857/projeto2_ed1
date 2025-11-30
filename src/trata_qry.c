@@ -20,6 +20,8 @@ typedef struct {
     int maior_id_atual;
     char* caminho_output;
     FILE* txt_file;
+    char tipo_sort;
+    int threshold;
 } Qry_t;
 
 // Declarações forward das funções estáticas
@@ -32,7 +34,7 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha);
  * @brief Função principal que processa o arquivo .qry
  */
 Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade, 
-                        char *caminho_output, int maior_id_inicial) {
+                        char *caminho_output, int maior_id_inicial, char tipo_sort, int threshold) {
     
     Qry_t *qry = malloc(sizeof(Qry_t));
     
@@ -44,6 +46,8 @@ Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade,
     qry->cidade = cidade;
     qry->comandos_executados = criaLista();
     qry->maior_id_atual = maior_id_inicial;
+    qry->tipo_sort = tipo_sort;
+    qry->threshold = threshold;
     
     // Copia o caminho de output
     qry->caminho_output = malloc(strlen(caminho_output) + 1);

@@ -87,6 +87,20 @@ int main(int argc, char *argv[]) {
     // Obtém o maior ID processado do arquivo GEO para uso no qry em clonagens 
     int maior_id_geo = get_maior_id_geo(cidade);
 
+    // Obtém argumentos opcionais de ordenação
+    char *tipo_sort_str = obter_valor_opcao(argc, argv, "to");
+    char *threshold_str = obter_valor_opcao(argc, argv, "i");
+    
+    char tipo_sort = 'q'; // Default: Quick Sort
+    if (tipo_sort_str != NULL && (strcmp(tipo_sort_str, "m") == 0 || strcmp(tipo_sort_str, "q") == 0)) {
+        tipo_sort = tipo_sort_str[0];
+    }
+    
+    int threshold = 10; 
+    if (threshold_str != NULL) {
+        threshold = atoi(threshold_str);
+    }
+
     // Caso o arquivo QRY tenha sido passado, processa-o
     if (caminho_qry != NULL) {
         DadosDoArquivo arqQry = criar_dados_arquivo(caminho_qry);
@@ -98,7 +112,8 @@ int main(int argc, char *argv[]) {
         }
 
         printf("\n=== Processando arquivo QRY ===\n");
-        Qry qry = executa_comando_qry(arqQry, cidade, caminho_output, maior_id_geo);
+        
+        Qry qry = executa_comando_qry(arqQry, cidade, caminho_output, maior_id_geo, tipo_sort, threshold);
         printf("=== Processamento QRY concluído ===\n\n");
 
         destruir_dados_arquivo(arqQry);

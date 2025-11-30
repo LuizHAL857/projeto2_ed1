@@ -38,7 +38,7 @@ typedef void* Qry;
  * @return Ponteiro opaco para o contexto Qry.
  */
 Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade, 
-                        char *caminho_output, int maior_id_inicial);
+                        char *caminho_output, int maior_id_inicial, char tipo_sort, int threshold);
 
 /**
  * @brief Libera toda a memória alocada para o contexto `Qry`.
