@@ -48,6 +48,11 @@ Cidade executa_comando_geo(DadosDoArquivo fileData, char *caminho_output,  char 
 Lista get_lista_cidade(Cidade cidade);
 
 /**
+ * @brief Retorna a lista de formas para SVG
+ */
+Lista get_lista_svg_cidade(Cidade cidade);
+
+/**
  * @brief Libera toda a memória alocada para o contexto `Cidade`.
  * 
  * Essa função desaloca todas as formas geométricas, estilos de texto, bem como

@@ -4,6 +4,7 @@
 #include "linha.h"
 #include "texto.h"
 #include "text_style.h"
+#include "anteparo.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -112,9 +113,14 @@ void escreveFormaSVG(Forma f, FILE* arquivo) {
             
             break;
 
-        case ANTEPARO:
-            
+        case ANTEPARO: {
+            Anteparo a = (Anteparo)forma->data;
+            fprintf(arquivo,
+                    "<line x1='%.2f' y1='%.2f' x2='%.2f' y2='%.2f' stroke='%s'/>\n",
+                    getX1Anteparo(a), getY1Anteparo(a), getX2Anteparo(a),
+                    getY2Anteparo(a), getCorAnteparo(a));
             break;
+        }
 
         default:
             break;
@@ -151,7 +157,7 @@ void desalocaForma(Forma f) {
             break;
 
         case ANTEPARO:
-          
+            desalocaAnteparo(forma->data);
             break;
 
         default:

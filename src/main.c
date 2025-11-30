@@ -1,4 +1,5 @@
 #include "trata_geo.h"
+#include "trata_qry.h"
 
 #include "leitor_arquivos.h"
 #include "circulo.h"
@@ -96,11 +97,12 @@ int main(int argc, char *argv[]) {
             exit(1);
         }
 
-        //Qry qry = executa_qry(arqQry, arqGeo, chao, caminho_output);
-       
+        printf("\n=== Processando arquivo QRY ===\n");
+        Qry qry = executa_comando_qry(arqQry, cidade, caminho_output, maior_id_geo);
+        printf("=== Processamento QRY concluído ===\n\n");
 
         destruir_dados_arquivo(arqQry);
-        //desaloca_qry(qry);
+        desaloca_qry(qry);
     }
 
     // Libera memória do arquivo GEO

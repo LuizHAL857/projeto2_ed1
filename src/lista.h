@@ -95,4 +95,13 @@ void insereFinalLista(Lista l, Conteudo chave);
  */
 bool listaVazia(Lista l);
 
+/**
+ * @brief Remove um elemento da lista sem liberar o conteúdo (chave).
+ * 
+ * @param lista Lista
+ * @param chave Conteúdo a ser removido
+ * @return true se removeu, false se não encontrou
+ */
+bool removeElementoLista(Lista lista, Conteudo chave);
+
 #endif

@@ -163,3 +163,26 @@ bool listaVazia(Lista l) {
     return (((stLista*)l)->inicio == NULL || ((stLista*)l)->tam == 0);
 }
 
+bool removeElementoLista(Lista lista, Conteudo chave) {
+    if (lista == NULL || ((stLista*)lista)->inicio == NULL) return false;
+
+    Celula anterior = NULL;
+    Celula atual = ((stLista*)lista)->inicio;
+
+    while (atual != NULL) {
+        if (((stCelula*)atual)->chave == chave) {
+            if (anterior == NULL) {
+                ((stLista*)lista)->inicio = ((stCelula*)atual)->prox;
+            } else {
+                ((stCelula*)anterior)->prox = ((stCelula*)atual)->prox;
+            }
+
+            free(atual); // Libera a célula, mas NÃO o conteúdo
+            ((stLista*)lista)->tam--;
+            return true;
+        }
+        anterior = atual;
+        atual = ((stCelula*)atual)->prox;
+    }
+    return false;
+}

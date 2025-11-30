@@ -6,6 +6,7 @@
 #include "retangulo.h"
 #include "texto.h"
 #include "text_style.h"
+#include "anteparo.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -99,6 +100,11 @@ Lista get_lista_cidade(Cidade cidade){
     return chao_t->lista_formas;
 }
 
+Lista get_lista_svg_cidade(Cidade cidade){
+    Cidade_t *chao_t = (Cidade_t *)cidade;
+    return chao_t->lista_svg;
+}
+
 
 
 void desaloca_geo(Cidade cidade){
@@ -127,6 +133,9 @@ void desaloca_geo(Cidade cidade){
             break;
 
             case TEXT_STYLE: desalocaTextStyle(forma->data);
+            break;
+
+            case ANTEPARO: desalocaAnteparo(forma->data);
             break;
 
             default:
