@@ -29,6 +29,8 @@ static void executa_comando_anteparo(Qry_t *qry, char *linha);
 static void executa_comando_destruicao(Qry_t *qry, char *linha);
 static void executa_comando_pintura(Qry_t *qry, char *linha);
 static void executa_comando_clonagem(Qry_t *qry, char *linha);
+static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData);
+
 
 /**
  * @brief Função principal que processa o arquivo .qry
@@ -122,13 +124,13 @@ Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade,
         free(linha_copia);
     }
     
+    // Generate SVG output showing final city state
+    cria_svg_qry(qry, fileData);
+    
     return qry;
 }
 
-/**
- * @brief Executa o comando 'a' (anteparo)
- * Formato: a i j [v|h]
- */
+
 static void executa_comando_anteparo(Qry_t *qry, char *linha) {
     char *comando = strtok(linha, " ");
     char *id_inicio = strtok(NULL, " ");
@@ -144,7 +146,7 @@ static void executa_comando_anteparo(Qry_t *qry, char *linha) {
     int j = atoi(id_fim);
     char h_ou_v = orientacao[0];
     
-    printf("  Comando ANTEPARO: i=%d, j=%d, orientação=%c\n", i, j, h_ou_v);
+    
     
     Lista lista_formas = get_lista_cidade(qry->cidade);
     Lista lista_svg = get_lista_svg_cidade(qry->cidade);
@@ -297,6 +299,127 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
     
   
     (void)qry;
+}
+
+
+/**
+ * @brief Cria o arquivo SVG com o estado final da cidade após processamento do .qry
+ */
+static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData) {
+    // Extrai o nome base do arquivo
+    char *nome_orig = obter_nome_arquivo(fileData);
+    char *nome_base = strrchr(nome_orig, '/');
+    if(nome_base) nome_base++; else nome_base = nome_orig;
+    
+    // Cria nome do arquivo SVG
+    size_t name_len = strlen(nome_base);
+    char *nome_arquivo = malloc(name_len + 1);
+    if (nome_arquivo == NULL) {
+        printf("Erro de alocação\n");
+        return;
+    }
+    
+    strcpy(nome_arquivo, nome_base);
+    char *dot = strrchr(nome_arquivo, '.');
+    if (dot) *dot = '\0';
+    
+    // Monta o caminho completo do arquivo SVG
+    size_t caminho_len = strlen(qry->caminho_output);
+    size_t nome_len_final = strlen(nome_arquivo);
+    size_t total_len = caminho_len + 1 + nome_len_final + 5; // +5 para ".svg\0"
+    
+    char *caminho_output_arquivo = malloc(total_len);
+    if (caminho_output_arquivo == NULL) {
+        printf("Erro de alocação\n");
+        free(nome_arquivo);
+        return;
+    }
+    
+    snprintf(caminho_output_arquivo, total_len, "%s/%s.svg", qry->caminho_output, nome_arquivo);
+    
+    // Abre o arquivo SVG para escrita
+    FILE *file = fopen(caminho_output_arquivo, "w");
+    if (file == NULL) {
+        printf("Erro ao criar arquivo SVG: %s\n", caminho_output_arquivo);
+        free(caminho_output_arquivo);
+        free(nome_arquivo);
+        return;
+    }
+    
+    // Escreve o cabeçalho SVG
+    fprintf(file, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    fprintf(file, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\">\n");
+    
+    // Cria uma lista temporária para renderização
+    Lista lista_svg_temp = criaLista();
+    
+    // Copia todas as formas da lista_formas para lista_svg_temp
+    Lista lista_formas = get_lista_cidade(qry->cidade);
+    Celula aux = getInicioLista(lista_formas);
+    while (aux != NULL) {
+        Forma f = getConteudoCelula(aux);
+        insereFinalLista(lista_svg_temp, f);
+        aux = getProxCelula(aux);
+    }
+    
+    // Renderiza as formas em ordem reversa (usando removeFinalLista)
+    while (!listaVazia(lista_svg_temp)) {
+        Forma forma = removeFinalLista(lista_svg_temp);
+        if (forma != NULL) {
+            tipo_forma tipo = getTipoForma(forma);
+            void* data = getDataForma(forma);
+            
+            if (tipo == CIRCLE) {
+                CIRCULO c = (CIRCULO)data;
+                fprintf(file, "<circle cx='%.2f' cy='%.2f' r='%.2f' fill='%s' stroke='%s'/>\n",
+                    getXCirculo(c), getYCirculo(c), getRaioCirculo(c), 
+                    getCorPCirculo(c), getCorBCirculo(c));
+                    
+            } else if (tipo == RECTANGLE) {
+                RETANGULO r = (RETANGULO)data;
+                fprintf(file, "<rect x='%.2f' y='%.2f' width='%.2f' height='%.2f' fill='%s' stroke='%s'/>\n",
+                    getXRetangulo(r), getYRetangulo(r), getLarguraRetangulo(r), 
+                    getAlturaRetangulo(r), getCorPRetangulo(r), getCorBRetangulo(r));
+                    
+            } else if (tipo == LINE) {
+                LINHA l = (LINHA)data;
+                fprintf(file, "<line x1='%.2f' y1='%.2f' x2='%.2f' y2='%.2f' stroke='%s'/>\n",
+                    getX1Linha(l), getY1Linha(l), getX2Linha(l), getY2Linha(l), getCorLinha(l));
+                    
+            } else if (tipo == TEXT) {
+                TEXTO t = (TEXTO)data;
+                char ancora = getAncoraTexto(t);
+                char *texto_ancora = "start";
+                
+                if (ancora == 'm' || ancora == 'M') {
+                    texto_ancora = "middle";
+                } else if (ancora == 'f' || ancora == 'F') {
+                    texto_ancora = "end";
+                } else if (ancora == 'i' || ancora == 'I') {
+                    texto_ancora = "start";
+                }
+                
+                fprintf(file, "<text x='%.2f' y='%.2f' fill='%s' stroke='%s' text-anchor='%s'>%s</text>\n",
+                    getXTexto(t), getYTexto(t), getCorPTexto(t), 
+                    getCorBTexto(t), texto_ancora, getTxtTexto(t));
+                    
+            } else if (tipo == ANTEPARO) {
+                Anteparo a = (Anteparo)data;
+                fprintf(file, "<line x1='%.2f' y1='%.2f' x2='%.2f' y2='%.2f' stroke='%s'/>\n",
+                    getX1Anteparo(a), getY1Anteparo(a), getX2Anteparo(a), 
+                    getY2Anteparo(a), getCorAnteparo(a));
+            }
+        }
+    }
+    
+    // Fecha o SVG
+    fprintf(file, "</svg>\n");
+    fclose(file);
+    
+    // Libera memória
+    liberaLista(lista_svg_temp);
+    free(caminho_output_arquivo);
+    free(nome_arquivo);
 }
 
 
