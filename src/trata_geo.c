@@ -362,7 +362,7 @@ static void cria_lista_svg(Cidade_t *cidade, char* caminho_output, DadosDoArquiv
     file,
     "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\">\n");
     while (!listaVazia(cidade->lista_svg)) {
-    Forma_t *forma = removeInicioLista(cidade->lista_svg);
+    Forma_t *forma = removeFinalLista(cidade->lista_svg);
     if (forma != NULL) {
       if (forma->tipo == CIRCLE) {
         CIRCULO c = (CIRCULO)forma->data;

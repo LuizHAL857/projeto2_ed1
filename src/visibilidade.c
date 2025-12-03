@@ -360,8 +360,7 @@ ContextoVisibilidade criaContextoVisibilidade(float x, float y, Lista lista_form
     int nSeg = getTamanhoLista(ctx->segmentos);
     // int nEventosMax = 2 * nSeg; // Base - removido para evitar warning
     
-    // Verifica cruzamentos (estimativa pessimista ou realocação seria melhor, mas vamos iterar)
-    // Para simplificar, vamos alocar o dobro do necessário no pior caso (4 eventos por segmento)
+   
     ctx->eventos = malloc(4 * nSeg * sizeof(Evento));
     
     int idx = 0;
@@ -444,8 +443,39 @@ static bool encoberto(CtxVis* ctx, float px, float py, ArvoreBinaria ativos) {
     for (int i = 0; i < tamanho; i++) {
         Segmento* s = (Segmento*)segmentos[i];
         
+        // Verifica se a BOMBA está sobre este segmento
+       
+        float bomb_dx1 = ctx->bomb_x - s->x1;
+        float bomb_dy1 = ctx->bomb_y - s->y1;
+        float bomb_dx2 = ctx->bomb_x - s->x2;
+        float bomb_dy2 = ctx->bomb_y - s->y2;
+        float bomb_dist1 = sqrt(bomb_dx1*bomb_dx1 + bomb_dy1*bomb_dy1);
+        float bomb_dist2 = sqrt(bomb_dx2*bomb_dx2 + bomb_dy2*bomb_dy2);
+        
+        // Se a bomba é um dos vértices do segmento, ignora
+        if (bomb_dist1 < EPSILON || bomb_dist2 < EPSILON) {
+            continue;
+        }
+        
+        // Verifica se a bomba está sobre o segmento
+        float seg_len = sqrt((s->x2 - s->x1)*(s->x2 - s->x1) + (s->y2 - s->y1)*(s->y2 - s->y1));
+        if (seg_len > EPSILON) {
+            float cross = fabs((s->x2 - s->x1) * (s->y1 - ctx->bomb_y) - (s->x1 - ctx->bomb_x) * (s->y2 - s->y1));
+            float perp_dist = cross / seg_len;
+            
+            if (perp_dist < EPSILON) {
+                // Bomba está sobre a reta do segmento, verifica se está entre os extremos
+                float dot = (ctx->bomb_x - s->x1) * (s->x2 - s->x1) + (ctx->bomb_y - s->y1) * (s->y2 - s->y1);
+                float t = dot / (seg_len * seg_len);
+                if (t >= -EPSILON && t <= 1.0 + EPSILON) {
+                    // Bomba está sobre o segmento, ignora completamente
+                    continue;
+                }
+            }
+        }
+        
         // Verifica se o ponto está sobre ou muito próximo deste segmento
-        // Se estiver, ignora este segmento (evita auto-bloqueio)
+        
         float dx1 = px - s->x1;
         float dy1 = py - s->y1;
         float dx2 = px - s->x2;
@@ -453,15 +483,14 @@ static bool encoberto(CtxVis* ctx, float px, float py, ArvoreBinaria ativos) {
         float dist1 = sqrt(dx1*dx1 + dy1*dy1);
         float dist2 = sqrt(dx2*dx2 + dy2*dy2);
         
-        // Se o ponto é um dos vértices do segmento, ignora
+        
         if (dist1 < EPSILON || dist2 < EPSILON) {
             continue;
         }
         
-        // Verifica se o ponto está sobre o segmento (distância perpendicular muito pequena)
-        float seg_len = sqrt((s->x2 - s->x1)*(s->x2 - s->x1) + (s->y2 - s->y1)*(s->y2 - s->y1));
+        
         if (seg_len > EPSILON) {
-            // Produto vetorial para calcular distância perpendicular
+            
             float cross = fabs((s->x2 - s->x1) * (s->y1 - py) - (s->x1 - px) * (s->y2 - s->y1));
             float perp_dist = cross / seg_len;
             
@@ -478,7 +507,7 @@ static bool encoberto(CtxVis* ctx, float px, float py, ArvoreBinaria ativos) {
         
         atualizarDist(s, ctx->bomb_x, ctx->bomb_y, ndx, ndy);
         
-        // Se o segmento está mais próximo que o ponto, ele bloqueia
+        
         if (s->dist < distP - EPSILON) {
             bloqueado = true;
             break;

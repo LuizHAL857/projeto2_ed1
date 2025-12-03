@@ -17,7 +17,7 @@
 int main(int argc, char *argv[]) {
 
     // Verifica se há argumentos demais
-    if (argc > 10) { 
+    if (argc > 14) { 
         printf("Erro, muitos argumentos!\n");
         exit(1);
     }
