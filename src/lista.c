@@ -5,30 +5,37 @@
 typedef struct stCelula {
     Conteudo chave;
     struct stCelula *prox;
+    struct stCelula *ant;
 } stCelula;  
 
 typedef struct stLista {
     int tam;
     stCelula *inicio;
+    stCelula *fim;
 } stLista;
 
 Lista criaLista() {
     stLista *l = malloc(sizeof(stLista));
     l->inicio = NULL;
+    l->fim = NULL;
     l->tam = 0;
     return ((stLista*)l);
 }
 
 void insereLista(Lista l, Conteudo chave) {
     stCelula *new = malloc(sizeof(stCelula));
+    new->chave = chave;
+    new->ant = NULL;
 
     if(((stLista*)l)->inicio == NULL) {
-        new->chave = chave;
-        ((stLista*)l)->inicio = new;
+        // Lista vazia
         new->prox = NULL;
+        ((stLista*)l)->inicio = new;
+        ((stLista*)l)->fim = new;
     } else {
-        new->chave = chave;
+        // Inserir no início
         new->prox = ((stLista*)l)->inicio;
+        ((stLista*)l)->inicio->ant = new;
         ((stLista*)l)->inicio = new;        
     }
 
@@ -54,10 +61,43 @@ void* removeInicioLista(Lista l) {
     Conteudo c = aux->chave;
 
     lista->inicio = aux->prox;
+    
+    if (lista->inicio != NULL) {
+        lista->inicio->ant = NULL;
+    } else {
+        // Lista ficou vazia
+        lista->fim = NULL;
+    }
 
     free(aux);
     lista->tam--;
 
+    return c;
+}
+
+void* removeFinalLista(Lista l) {
+    if (l == NULL) return NULL;
+    
+    stLista *lista = (stLista*)l;
+    
+    if (lista->fim == NULL) return NULL;  // lista vazia
+    
+    stCelula *ultimo = lista->fim;
+    Conteudo c = ultimo->chave;
+    
+    if (lista->fim->ant == NULL) {
+        // Apenas um elemento
+        lista->inicio = NULL;
+        lista->fim = NULL;
+    } else {
+        // Mais de um elemento
+        lista->fim = lista->fim->ant;
+        lista->fim->prox = NULL;
+    }
+    
+    free(ultimo);
+    lista->tam--;
+    
     return c;
 }
 
@@ -100,25 +140,33 @@ Conteudo getConteudoCelula(Celula p) {
 bool searchAndRemoveLista(Lista lista, Conteudo chave) {
     if (lista == NULL || ((stLista*)lista)->inicio == NULL) return false;
 
-    Celula anterior = NULL;
     Celula atual = ((stLista*)lista)->inicio;
 
     while (atual != NULL) {
         if (((stCelula*)atual)->chave == chave) {
-            if (anterior == NULL) {
-                // removendo do início
-                ((stLista*)lista)->inicio = ((stCelula*)atual)->prox;
+            // Atualizar ponteiro anterior
+            if (((stCelula*)atual)->ant != NULL) {
+                ((stCelula*)atual)->ant->prox = ((stCelula*)atual)->prox;
             } else {
-                ((stCelula*)anterior)->prox = ((stCelula*)atual)->prox;
+                // Removendo do início
+                ((stLista*)lista)->inicio = ((stCelula*)atual)->prox;
+            }
+            
+            // Atualizar ponteiro próximo
+            if (((stCelula*)atual)->prox != NULL) {
+                ((stCelula*)atual)->prox->ant = ((stCelula*)atual)->ant;
+            } else {
+                // Removendo do fim
+                ((stLista*)lista)->fim = ((stCelula*)atual)->ant;
             }
 
             // libera a chave e a célula
             free(((stCelula*)atual)->chave);
             free(atual);
+            ((stLista*)lista)->tam--;
             return true;  // remove apenas a primeira ocorrência
         }
 
-        anterior = atual;
         atual = ((stCelula*)atual)->prox;
     }
     return false;
@@ -127,13 +175,23 @@ bool searchAndRemoveLista(Lista lista, Conteudo chave) {
 void removeCelula(Lista lista, Celula alvo, Celula anterior) {
     if (alvo == NULL) return;
 
-    if (anterior == NULL) {
-        // Remover o primeiro elemento da lista
-        ((stLista*)lista)->inicio = ((stCelula*)alvo)->prox;
+    // Atualizar ponteiro anterior
+    if (((stCelula*)alvo)->ant != NULL) {
+        ((stCelula*)alvo)->ant->prox = ((stCelula*)alvo)->prox;
     } else {
-        ((stCelula*)anterior)->prox = ((stCelula*)alvo)->prox;
+        // Removendo do início
+        ((stLista*)lista)->inicio = ((stCelula*)alvo)->prox;
     }
-
+    
+    // Atualizar ponteiro próximo
+    if (((stCelula*)alvo)->prox != NULL) {
+        ((stCelula*)alvo)->prox->ant = ((stCelula*)alvo)->ant;
+    } else {
+        // Removendo do fim
+        ((stLista*)lista)->fim = ((stCelula*)alvo)->ant;
+    }
+    
+    ((stLista*)lista)->tam--;
 }
 
 void insereFinalLista(Lista l, Conteudo chave) {
@@ -142,15 +200,15 @@ void insereFinalLista(Lista l, Conteudo chave) {
     novo->prox = NULL;
 
     // Se a lista está vazia
-    if (((stLista*)l)->inicio == NULL) {
+    if (((stLista*)l)->fim == NULL) {
+        novo->ant = NULL;
         ((stLista*)l)->inicio = novo;
+        ((stLista*)l)->fim = novo;
     } else {
-        // Percorre até o último
-        stCelula *aux = ((stLista*)l)->inicio;
-        while (aux->prox != NULL) {
-            aux = aux->prox;
-        }
-        aux->prox = novo;
+        // Inserir no final usando ponteiro fim
+        novo->ant = ((stLista*)l)->fim;
+        ((stLista*)l)->fim->prox = novo;
+        ((stLista*)l)->fim = novo;
     }
 
     ((stLista*)l)->tam++;
@@ -166,23 +224,42 @@ bool listaVazia(Lista l) {
 bool removeElementoLista(Lista lista, Conteudo chave) {
     if (lista == NULL || ((stLista*)lista)->inicio == NULL) return false;
 
-    Celula anterior = NULL;
     Celula atual = ((stLista*)lista)->inicio;
 
     while (atual != NULL) {
         if (((stCelula*)atual)->chave == chave) {
-            if (anterior == NULL) {
-                ((stLista*)lista)->inicio = ((stCelula*)atual)->prox;
+            // Atualizar ponteiro anterior
+            if (((stCelula*)atual)->ant != NULL) {
+                ((stCelula*)atual)->ant->prox = ((stCelula*)atual)->prox;
             } else {
-                ((stCelula*)anterior)->prox = ((stCelula*)atual)->prox;
+                // Removendo do início
+                ((stLista*)lista)->inicio = ((stCelula*)atual)->prox;
+            }
+            
+            // Atualizar ponteiro próximo
+            if (((stCelula*)atual)->prox != NULL) {
+                ((stCelula*)atual)->prox->ant = ((stCelula*)atual)->ant;
+            } else {
+                // Removendo do fim
+                ((stLista*)lista)->fim = ((stCelula*)atual)->ant;
             }
 
             free(atual); // Libera a célula, mas NÃO o conteúdo
             ((stLista*)lista)->tam--;
             return true;
         }
-        anterior = atual;
         atual = ((stCelula*)atual)->prox;
     }
     return false;
 }
+
+Celula getAnteriorCelula(Celula p) {
+    if (p == NULL) return NULL;
+    return ((stCelula*)p)->ant;
+}
+
+Celula getFinalLista(Lista l) {
+    if (l == NULL) return NULL;
+    return ((stLista*)l)->fim;
+}
+
