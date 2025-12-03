@@ -1,44 +1,59 @@
 #ifndef VISIBILIDADE_H
 #define VISIBILIDADE_H
 
+#include <stdbool.h>
 #include "lista.h"
-#include "arvore_binaria.h"
-#include "forma.h"  
-#include "anteparo.h" 
+#include "forma.h"
 
+// O contexto é opaco — não expomos a struct interna
 typedef void* ContextoVisibilidade;
 
 /**
- * @brief Cria o contexto de visibilidade baseado na posição da bomba e na lista de formas.
+ * Cria o contexto de visibilidade para um observador
+ * na posição (bx, by), usando a lista de formas fornecida.
  *
- * @param x coordenada X da bomba
- * @param y coordenada Y da bomba
- * @param lista_formas lista de formas (círculos, retângulos, linhas, textos, anteparos)
- * @param tipo_sort   'm' = mergesort, 'q' = quicksort, 'i' = insertion
- * @param threshold   limite para usar insertion sort
+ * tipo_sort e threshold existem apenas para manter compatibilidade,
+ * mas não são usados nesta implementação (ordenamos sempre com quick_sort).
  */
-ContextoVisibilidade criaContextoVisibilidade( float x, float y,Lista lista_formas, char tipo_sort, int threshold);
+ContextoVisibilidade criaContextoVisibilidade(
+    float bx,
+    float by,
+    Lista formas,
+    char tipo_sort,
+    int threshold
+);
 
 /**
- * @brief Testa se um ponto é visível a partir da bomba (O(log n)).
+ * Retorna true se o ponto (px, py) for visível a partir do contexto.
  */
-bool pontoVisivel(ContextoVisibilidade ctx, float px, float py);
+bool pontoVisivel(
+    ContextoVisibilidade C,
+    float px,
+    float py
+);
 
 /**
- * @brief Testa se uma forma é visível (amostra pontos, custo O(log n)).
+ * Verifica se uma forma é visível (qualquer parte dela).
  */
-bool formaVisivel(ContextoVisibilidade ctx, Forma forma);
+bool formaVisivel(
+    ContextoVisibilidade C,
+    Forma f
+);
 
 /**
- * @brief Retorna lista com todas as formas visíveis.
+ * Retorna uma lista contendo todas as formas visíveis.
+ * A lista retornada deve ser liberada pelo chamador,
+ * mas não as formas contidas nela.
  */
-Lista getFormasVisiveis(ContextoVisibilidade ctx);
+Lista getFormasVisiveis(
+    ContextoVisibilidade C
+);
 
 /**
- * @brief Libera todo o contexto.
+ * Libera completamente o contexto e toda memória interna alocada.
  */
-void liberaContextoVisibilidade(ContextoVisibilidade ctx);
-
-
+void liberaContextoVisibilidade(
+    ContextoVisibilidade C
+);
 
 #endif
