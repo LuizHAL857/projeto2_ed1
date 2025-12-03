@@ -302,3 +302,50 @@ Anteparo transforma_retangulo_em_anteparos(void* forma_original, int *maior_id, 
   Forma_t* forma = (Forma_t*)forma_original;
   return transforma_retangulo(forma, maior_id, anteparos);
 }
+
+void setCorAnteparo(Anteparo a, char* nova_cor){
+  if(a == NULL || nova_cor == NULL) return;
+  
+  Anteparo_T* aTemp = ((Anteparo_T*)a);
+  
+  // Libera a cor antiga
+  if(aTemp->cor != NULL){
+    free(aTemp->cor);
+  }
+  
+  // Aloca e copia a nova cor
+  aTemp->cor = (char*)malloc(sizeof(char)*(strlen(nova_cor) + 1));
+  if(aTemp->cor == NULL){
+    printf("erro de alocação para a cor do anteparo\n");
+    exit(1);
+  }
+  strcpy(aTemp->cor, nova_cor);
+}
+
+Anteparo clonaAnteparo(Anteparo a, int novo_id, float dx, float dy){
+  if(a == NULL) return NULL;
+  
+  Anteparo_T* aTemp = ((Anteparo_T*)a);
+  Anteparo_T* clone = (Anteparo_T*)malloc(sizeof(Anteparo_T));
+  
+  if(clone == NULL){
+    printf("erro de alocação para o clone do anteparo\n");
+    exit(1);
+  }
+  
+  clone->id = novo_id;
+  clone->x1 = aTemp->x1 + dx;
+  clone->x2 = aTemp->x2 + dx;
+  clone->y1 = aTemp->y1 + dy;
+  clone->y2 = aTemp->y2 + dy;
+  
+  // Aloca e copia a cor
+  clone->cor = (char*)malloc(sizeof(char)*(strlen(aTemp->cor) + 1));
+  if(clone->cor == NULL){
+    printf("erro de alocação para a cor do clone do anteparo\n");
+    exit(1);
+  }
+  strcpy(clone->cor, aTemp->cor);
+  
+  return clone;
+}

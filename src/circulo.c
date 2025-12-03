@@ -181,3 +181,13 @@ void desalocaCirculo(CIRCULO c){
     free(cTemp);
 
 }
+
+CIRCULO clonaCirculo(CIRCULO c, int novo_id, float dx, float dy){
+    circulo *cTemp = ((circulo*)c);
+    return criaCirculo(novo_id, 
+                      cTemp->x + dx, 
+                      cTemp->y + dy, 
+                      cTemp->raio, 
+                      cTemp->corP, 
+                      cTemp->corB);
+}

@@ -292,3 +292,13 @@ void desalocaTexto(TEXTO t){
     free(tTemp);
 
 }
+TEXTO clonaTexto(TEXTO t, int novo_id, float dx, float dy){
+    texto *tTemp = ((texto*)t);
+    return criaTexto(novo_id,
+                    tTemp->x + dx,
+                    tTemp->y + dy,
+                    tTemp->corB,
+                    tTemp->corP,
+                    tTemp->ancora,
+                    tTemp->txt);
+}

@@ -168,3 +168,12 @@ void desalocaLinha(LINHA l){
     free(lTemp);
 
 }
+LINHA clonaLinha(LINHA l, int novo_id, float dx, float dy){
+    linha *lTemp = ((linha*)l);
+    return criaLinha(novo_id,
+                    lTemp->x1 + dx,
+                    lTemp->y1 + dy,
+                    lTemp->x2 + dx,
+                    lTemp->y2 + dy,
+                    lTemp->cor);
+}

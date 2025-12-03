@@ -319,13 +319,47 @@ static bool formaEstaDentro(Poligono p, Forma f) {
             return isInside(p, pt);
             
         case ANTEPARO: {
-            // Para anteparos, verifica se qualquer dos pontos está dentro
+            // Para anteparos, verifica múltiplos pontos ao longo do segmento
+            // Isso garante que anteparos na borda do polígono sejam detectados
             Ponto p1 = {getX1Anteparo(data), getY1Anteparo(data)};
             Ponto p2 = {getX2Anteparo(data), getY2Anteparo(data)};
-            Ponto pmid = {(p1.x + p2.x)/2, (p1.y + p2.y)/2};
             
-            // Se qualquer ponto do anteparo está dentro, ele é visível
-            return isInside(p, p1) || isInside(p, p2) || isInside(p, pmid);
+            // Testa vários pontos ao longo do segmento
+            for (int i = 0; i <= 4; i++) {
+                float t = i / 4.0f;
+                Ponto pt = {
+                    p1.x + t * (p2.x - p1.x),
+                    p1.y + t * (p2.y - p1.y)
+                };
+                
+                if (isInside(p, pt)) {
+                    return true;
+                }
+                
+                // Testa pontos deslocados para ambos os lados do segmento
+                // (útil para anteparos exatamente na borda)
+                float dx = p2.y - p1.y;  // perpendicular ao segmento
+                float dy = -(p2.x - p1.x);
+                float len = sqrt(dx*dx + dy*dy);
+                if (len > 0.001f) {
+                    dx /= len;
+                    dy /= len;
+                    
+                    // Testa deslocamento de 1.0 unidade para um lado
+                    Ponto pt_offset1 = {pt.x + dx * 1.0f, pt.y + dy * 1.0f};
+                    if (isInside(p, pt_offset1)) {
+                        return true;
+                    }
+                    
+                    // Testa deslocamento para o outro lado
+                    Ponto pt_offset2 = {pt.x - dx * 1.0f, pt.y - dy * 1.0f};
+                    if (isInside(p, pt_offset2)) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
         }
             
         default:
@@ -581,8 +615,105 @@ static void executa_comando_pintura(Qry_t *qry, char *linha) {
     
     printf("  Comando PINTURA: x=%.2f, y=%.2f, cor=%s, sufixo=%s\n", x, y, cor, sufixo);
     
+    // 1. Criar contexto de visibilidade
+    Lista lista_formas = get_lista_cidade(qry->cidade);
+    ContextoVisibilidade ctx = criaContextoVisibilidade(x, y, lista_formas, 
+                                                        qry->tipo_sort, qry->threshold);
     
-    (void)qry;
+    if (!ctx) {
+        printf("Erro ao criar contexto de visibilidade\n");
+        return;
+    }
+    
+    // 2. Calcular polígono de visibilidade
+    Poligono regiao_visibilidade = calculaPoligonoVisibilidade(ctx, x, y);
+    
+    if (regiao_visibilidade) {
+        // 3. Identificar e pintar formas dentro do polígono
+        if (qry->txt_file) {
+            fprintf(qry->txt_file, "\nBomba de pintura em (%.2f, %.2f) com cor %s:\n", x, y, cor);
+        }
+        
+        BoundingBox bb_poly = getBoundingBox(regiao_visibilidade);
+        
+        // Expande BB com margem de tolerância
+        float margem = 1.0f;
+        bb_poly.min_x -= margem;
+        bb_poly.max_x += margem;
+        bb_poly.min_y -= margem;
+        bb_poly.max_y += margem;
+        
+        int count = 0;
+        for (Celula c = getInicioLista(lista_formas); c; c = getProxCelula(c)) {
+            Forma f = getConteudoCelula(c);
+            BoundingBox bb_forma = getBBForma(f);
+            
+            // Teste rápido: Bounding Box
+            if (haInterseccaoBB(bb_poly, bb_forma)) {
+                // Teste preciso: verifica se a forma está dentro do polígono
+                if (formaEstaDentro(regiao_visibilidade, f)) {
+                    tipo_forma tipo = getTipoForma(f);
+                    void* data = getDataForma(f);
+                    int id = -1;
+                    char *tipo_str = "Desconhecido";
+                    
+                    // Altera as cores da forma
+                    switch(tipo) {
+                        case CIRCLE:
+                            id = getIDCirculo(data);
+                            tipo_str = "Circulo";
+                            setCorPCirculo(data, cor);
+                            setCorBCirculo(data, cor);
+                            break;
+                        case RECTANGLE:
+                            id = getIDRetangulo(data);
+                            tipo_str = "Retangulo";
+                            setCorPRetangulo(data, cor);
+                            setCorBRetangulo(data, cor);
+                            break;
+                        case LINE:
+                            id = getIDLinha(data);
+                            tipo_str = "Linha";
+                            setCorLinha(data, cor);
+                            break;
+                        case TEXT:
+                            id = getIDTexto(data);
+                            tipo_str = "Texto";
+                            setCorPTexto(data, cor);
+                            setCorBTexto(data, cor);
+                            break;
+                        case ANTEPARO:
+                            id = getIDAnteparo(data);
+                            tipo_str = "Anteparo";
+                            setCorAnteparo(data, cor);
+                            break;
+                        default:
+                            break;
+                    }
+                    
+                    if (qry->txt_file && id != -1) {
+                        fprintf(qry->txt_file, "  Pintado: %s ID %d\n", tipo_str, id);
+                    }
+                    count++;
+                }
+            }
+        }
+        
+        if (qry->txt_file) {
+            fprintf(qry->txt_file, "Total de formas pintadas: %d\n", count);
+        }
+        
+        // 4. Gerar SVG da região de visibilidade
+        geraSVGVisibilidade(regiao_visibilidade, x, y, sufixo, qry);
+        
+        // Só libera o polígono se não foi armazenado para renderização posterior
+        if (strcmp(sufixo, "-") != 0) {
+            liberaPoligono(regiao_visibilidade);
+        }
+    }
+    
+    // Libera contexto de visibilidade
+    liberaContextoVisibilidade(ctx);
 }
 
 
@@ -608,8 +739,125 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
     printf("  Comando CLONAGEM: x=%.2f, y=%.2f, dx=%.2f, dy=%.2f, sufixo=%s\n", 
            x, y, dx, dy, sufixo);
     
-  
-    (void)qry;
+    // 1. Criar contexto de visibilidade
+    Lista lista_formas = get_lista_cidade(qry->cidade);
+    Lista lista_svg = get_lista_svg_cidade(qry->cidade);
+    Lista lista_free = obtem_lista_para_desalocar(qry->cidade);
+    
+    ContextoVisibilidade ctx = criaContextoVisibilidade(x, y, lista_formas, 
+                                                        qry->tipo_sort, qry->threshold);
+    
+    if (!ctx) {
+        printf("Erro ao criar contexto de visibilidade\n");
+        return;
+    }
+    
+    // 2. Calcular polígono de visibilidade
+    Poligono regiao_visibilidade = calculaPoligonoVisibilidade(ctx, x, y);
+    
+    if (regiao_visibilidade) {
+        // 3. Identificar formas visíveis e cloná-las
+        if (qry->txt_file) {
+            fprintf(qry->txt_file, "\nBomba de clonagem em (%.2f, %.2f) com deslocamento (%.2f, %.2f):\n", 
+                    x, y, dx, dy);
+        }
+        
+        BoundingBox bb_poly = getBoundingBox(regiao_visibilidade);
+        
+        // Expande BB com margem de tolerância
+        float margem = 1.0f;
+        bb_poly.min_x -= margem;
+        bb_poly.max_x += margem;
+        bb_poly.min_y -= margem;
+        bb_poly.max_y += margem;
+        
+        Lista clones = criaLista();
+        int count = 0;
+        
+        for (Celula c = getInicioLista(lista_formas); c; c = getProxCelula(c)) {
+            Forma f = getConteudoCelula(c);
+            BoundingBox bb_forma = getBBForma(f);
+            
+            // Teste rápido: Bounding Box
+            if (haInterseccaoBB(bb_poly, bb_forma)) {
+                // Teste preciso: verifica se a forma está dentro do polígono
+                if (formaEstaDentro(regiao_visibilidade, f)) {
+                    tipo_forma tipo = getTipoForma(f);
+                    void* data = getDataForma(f);
+                    int id_original = -1;
+                    int id_clone = ++qry->maior_id_atual;
+                    char *tipo_str = "Desconhecido";
+                    void* clone_data = NULL;
+                    
+                    // Cria clone usando as funções de clonagem
+                    switch(tipo) {
+                        case CIRCLE:
+                            id_original = getIDCirculo(data);
+                            tipo_str = "Circulo";
+                            clone_data = clonaCirculo(data, id_clone, dx, dy);
+                            break;
+                        case RECTANGLE:
+                            id_original = getIDRetangulo(data);
+                            tipo_str = "Retangulo";
+                            clone_data = clonaRetangulo(data, id_clone, dx, dy);
+                            break;
+                        case LINE:
+                            id_original = getIDLinha(data);
+                            tipo_str = "Linha";
+                            clone_data = clonaLinha(data, id_clone, dx, dy);
+                            break;
+                        case TEXT:
+                            id_original = getIDTexto(data);
+                            tipo_str = "Texto";
+                            clone_data = clonaTexto(data, id_clone, dx, dy);
+                            break;
+                        case ANTEPARO:
+                            id_original = getIDAnteparo(data);
+                            tipo_str = "Anteparo";
+                            clone_data = clonaAnteparo(data, id_clone, dx, dy);
+                            break;
+                        default:
+                            break;
+                    }
+                    
+                    if (clone_data != NULL) {
+                        Forma clone_forma = criaForma(tipo, clone_data);
+                        insereFinalLista(clones, clone_forma);
+                        
+                        if (qry->txt_file && id_original != -1) {
+                            fprintf(qry->txt_file, "  Clonado: %s ID %d -> Clone ID %d\n", 
+                                    tipo_str, id_original, id_clone);
+                        }
+                        count++;
+                    }
+                }
+            }
+        }
+        
+        // Adiciona os clones às listas da cidade
+        while (!listaVazia(clones)) {
+            Forma clone = removeInicioLista(clones);
+            insereFinalLista(lista_formas, clone);
+            insereFinalLista(lista_svg, clone);
+            insereFinalLista(lista_free, clone);
+        }
+        liberaLista(clones);
+        
+        if (qry->txt_file) {
+            fprintf(qry->txt_file, "Total de formas clonadas: %d\n", count);
+        }
+        
+        // 4. Gerar SVG da região de visibilidade
+        geraSVGVisibilidade(regiao_visibilidade, x, y, sufixo, qry);
+        
+        // Só libera o polígono se não foi armazenado para renderização posterior
+        if (strcmp(sufixo, "-") != 0) {
+            liberaPoligono(regiao_visibilidade);
+        }
+    }
+    
+    // Libera contexto de visibilidade
+    liberaContextoVisibilidade(ctx);
 }
 
 
@@ -772,6 +1020,27 @@ void desaloca_qry(Qry qry) {
     
     if (qry_t->comandos_executados != NULL) {
         liberaLista(qry_t->comandos_executados);
+    }
+    
+    // Libera lista de polígonos de visibilidade e seus conteúdos
+    if (qry_t->visibility_polygons != NULL) {
+        // Libera cada polígono armazenado
+        while (!listaVazia(qry_t->visibility_polygons)) {
+            typedef struct {
+                Poligono poligono;
+                float bomb_x;
+                float bomb_y;
+            } VisibilityData;
+            
+            VisibilityData* vis_data = (VisibilityData*)removeInicioLista(qry_t->visibility_polygons);
+            if (vis_data != NULL) {
+                if (vis_data->poligono != NULL) {
+                    liberaPoligono(vis_data->poligono);
+                }
+                free(vis_data);
+            }
+        }
+        liberaLista(qry_t->visibility_polygons);
     }
     
     if (qry_t->caminho_output != NULL) {

@@ -176,6 +176,17 @@ float calculoAreaCirculo(CIRCULO c);
  */
 void desalocaCirculo(CIRCULO c);
 
+/**
+ * @brief Cria um clone do círculo com novo ID e deslocamento.
+ * 
+ * @param c Ponteiro para o círculo original.
+ * @param novo_id Novo ID para o clone.
+ * @param dx Deslocamento em X.
+ * @param dy Deslocamento em Y.
+ * @return CIRCULO Novo círculo clonado.
+ */
+CIRCULO clonaCirculo(CIRCULO c, int novo_id, float dx, float dy);
+
 
 
 #endif

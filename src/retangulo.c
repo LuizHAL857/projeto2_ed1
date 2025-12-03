@@ -197,3 +197,13 @@ void desalocarRetangulo(RETANGULO r){
     free(rTemp);
 
 }
+RETANGULO clonaRetangulo(RETANGULO r, int novo_id, float dx, float dy){
+    retangulo *rTemp = ((retangulo*)r);
+    return criaRetangulo(novo_id,
+                        rTemp->x + dx,
+                        rTemp->y + dy,
+                        rTemp->largura,
+                        rTemp->altura,
+                        rTemp->corB,
+                        rTemp->corP);
+}

@@ -54,6 +54,16 @@ float getY2Anteparo(Anteparo a);
 char* getCorAnteparo(Anteparo a);
 
 /**
+ * @brief Define a cor do anteparo
+ */
+void setCorAnteparo(Anteparo a, char* nova_cor);
+
+/**
+ * @brief Cria um clone do anteparo com novo ID e deslocamento.
+ */
+Anteparo clonaAnteparo(Anteparo a, int novo_id, float dx, float dy);
+
+/**
  * @brief Desaloca um anteparo
  */
 void desalocaAnteparo(Anteparo a);

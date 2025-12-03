@@ -143,3 +143,7 @@ void desalocarRetangulo(RETANGULO r);
 
 
 #endif 
+/**
+ * @brief Cria um clone do retângulo com novo ID e deslocamento.
+ */
+RETANGULO clonaRetangulo(RETANGULO r, int novo_id, float dx, float dy);
