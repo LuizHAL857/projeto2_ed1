@@ -18,7 +18,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-
 typedef struct {
     Cidade cidade;
     DadosDoArquivo fileData;
@@ -28,17 +27,14 @@ typedef struct {
     FILE* txt_file;
     char tipo_sort;
     int threshold;
-    Lista visibility_polygons; // Lista de polígonos de visibilidade para renderizar no SVG
+    Lista visibility_polygons; 
 } Qry_t;
 
-// Declarações forward das funções estáticas
 static void executa_comando_anteparo(Qry_t *qry, char *linha);
 static void executa_comando_destruicao(Qry_t *qry, char *linha);
 static void executa_comando_pintura(Qry_t *qry, char *linha);
 static void executa_comando_clonagem(Qry_t *qry, char *linha);
 static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData);
-
-
 
 Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade, 
                         char *caminho_output, int maior_id_inicial, char tipo_sort, int threshold) {
@@ -66,7 +62,7 @@ Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade,
     }
     strcpy(qry->caminho_output, caminho_output);
     
-    // Abre arquivo TXT de saída
+   
     char *nome_orig = obter_nome_arquivo(fileData);
     char *nome_base = strrchr(nome_orig, '/');
     if(nome_base) nome_base++; else nome_base = nome_orig;
@@ -92,7 +88,7 @@ Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade,
         qry->txt_file = NULL;
     }
     
-    // Processa cada linha do arquivo .qry
+    
     while (!listaVazia(obter_lista_linhas(fileData))) {
         char *linha = (char*)removeInicioLista(obter_lista_linhas(fileData));
         char *linha_copia = malloc(strlen(linha) + 1);
@@ -131,12 +127,11 @@ Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade,
         free(linha_copia);
     }
     
-    // Generate SVG output showing final city state
+    
     cria_svg_qry(qry, fileData);
     
     return qry;
 }
-
 
 static void executa_comando_anteparo(Qry_t *qry, char *linha) {
     strtok(linha, " ");
@@ -238,136 +233,6 @@ static void executa_comando_anteparo(Qry_t *qry, char *linha) {
     liberaLista(to_add);
 }
 
-
-static BoundingBox getBBForma(Forma f) {
-    BoundingBox bb = {INFINITY, INFINITY, -INFINITY, -INFINITY};
-    tipo_forma tipo = getTipoForma(f);
-    void* data = getDataForma(f);
-    
-    switch(tipo) {
-        case CIRCLE: {
-            float x = getXCirculo(data);
-            float y = getYCirculo(data);
-            float r = getRaioCirculo(data);
-            bb.min_x = x - r; bb.max_x = x + r;
-            bb.min_y = y - r; bb.max_y = y + r;
-            break;
-        }
-        case RECTANGLE: {
-            float x = getXRetangulo(data);
-            float y = getYRetangulo(data);
-            float w = getLarguraRetangulo(data);
-            float h = getAlturaRetangulo(data);
-            bb.min_x = x; bb.max_x = x + w;
-            bb.min_y = y; bb.max_y = y + h;
-            break;
-        }
-        case LINE: {
-            float x1 = getX1Linha(data);
-            float y1 = getY1Linha(data);
-            float x2 = getX2Linha(data);
-            float y2 = getY2Linha(data);
-            bb.min_x = fmin(x1, x2); bb.max_x = fmax(x1, x2);
-            bb.min_y = fmin(y1, y2); bb.max_y = fmax(y1, y2);
-            break;
-        }
-        case TEXT: {
-            float x = getXTexto(data);
-            float y = getYTexto(data);
-            bb.min_x = x; bb.max_x = x + 10; 
-            bb.min_y = y; bb.max_y = y + 10;
-            break;
-        }
-        case ANTEPARO: {
-            float x1 = getX1Anteparo(data);
-            float y1 = getY1Anteparo(data);
-            float x2 = getX2Anteparo(data);
-            float y2 = getY2Anteparo(data);
-            bb.min_x = fmin(x1, x2); bb.max_x = fmax(x1, x2);
-            bb.min_y = fmin(y1, y2); bb.max_y = fmax(y1, y2);
-            break;
-        }
-        default: break;
-    }
-    return bb;
-}
-
-static bool formaEstaDentro(Poligono p, Forma f) {
-    Ponto pt;
-    tipo_forma tipo = getTipoForma(f);
-    void* data = getDataForma(f);
-    
-    switch(tipo) {
-        case CIRCLE:
-            pt.x = getXCirculo(data);
-            pt.y = getYCirculo(data);
-            return isInside(p, pt);
-            
-        case RECTANGLE:
-            pt.x = getXRetangulo(data) + getLarguraRetangulo(data)/2;
-            pt.y = getYRetangulo(data) + getAlturaRetangulo(data)/2;
-            return isInside(p, pt);
-            
-        case LINE:
-            pt.x = (getX1Linha(data) + getX2Linha(data))/2;
-            pt.y = (getY1Linha(data) + getY2Linha(data))/2;
-            return isInside(p, pt);
-            
-        case TEXT:
-            pt.x = getXTexto(data);
-            pt.y = getYTexto(data);
-            return isInside(p, pt);
-            
-        case ANTEPARO: {
-            // Para anteparos, verifica múltiplos pontos ao longo do segmento
-            // Isso garante que anteparos na borda do polígono sejam detectados
-            Ponto p1 = {getX1Anteparo(data), getY1Anteparo(data)};
-            Ponto p2 = {getX2Anteparo(data), getY2Anteparo(data)};
-            
-            // Testa vários pontos ao longo do segmento
-            for (int i = 0; i <= 4; i++) {
-                float t = i / 4.0f;
-                Ponto pt = {
-                    p1.x + t * (p2.x - p1.x),
-                    p1.y + t * (p2.y - p1.y)
-                };
-                
-                if (isInside(p, pt)) {
-                    return true;
-                }
-                
-                // Testa pontos deslocados para ambos os lados do segmento
-                // (útil para anteparos exatamente na borda)
-                float dx = p2.y - p1.y;  // perpendicular ao segmento
-                float dy = -(p2.x - p1.x);
-                float len = sqrt(dx*dx + dy*dy);
-                if (len > 0.001f) {
-                    dx /= len;
-                    dy /= len;
-                    
-                    // Testa deslocamento de 1.0 unidade para um lado
-                    Ponto pt_offset1 = {pt.x + dx * 1.0f, pt.y + dy * 1.0f};
-                    if (isInside(p, pt_offset1)) {
-                        return true;
-                    }
-                    
-                    // Testa deslocamento para o outro lado
-                    Ponto pt_offset2 = {pt.x - dx * 1.0f, pt.y - dy * 1.0f};
-                    if (isInside(p, pt_offset2)) {
-                        return true;
-                    }
-                }
-            }
-            
-            return false;
-        }
-            
-        default:
-            return false;
-    }
-}
-
-
 static Poligono calculaPoligonoVisibilidade(ContextoVisibilidade ctx, float x, float y) {
     int num_raios = 72; 
     Poligono regiao_visibilidade = criaPoligono();
@@ -380,7 +245,7 @@ static Poligono calculaPoligonoVisibilidade(ContextoVisibilidade ctx, float x, f
         float dy = sin(angulo);
         
         float min_dist = 0.0f;
-        float max_dist = 10000.0f;
+        float max_dist = 1000.0f;
         float dist = max_dist;
         
         float px_far = x + dx * max_dist;
@@ -402,8 +267,9 @@ static Poligono calculaPoligonoVisibilidade(ContextoVisibilidade ctx, float x, f
             dist = min_dist;
         }
         
-        Ponto p = {x + dx * dist, y + dy * dist};
+        Ponto p = criaPonto(x + dx * dist, y + dy * dist);
         insereVertice(regiao_visibilidade, p);
+        liberaPonto(p);
     }
     
     return regiao_visibilidade;
@@ -412,15 +278,18 @@ static Poligono calculaPoligonoVisibilidade(ContextoVisibilidade ctx, float x, f
 static void destroiFormasEmColisao(Lista lista_formas, Poligono regiao_visibilidade, Qry_t *qry) {
     Lista lista_svg = get_lista_svg_cidade(qry->cidade);
     Lista lista_free = obtem_lista_para_desalocar(qry->cidade);
-    BoundingBox bb_poly = getBoundingBox(regiao_visibilidade);
+    BoundingBox bb_poly_orig = getBoundingBox(regiao_visibilidade);
     
     // Expande BB do polígono com uma margem de tolerância para garantir 
     // que as paredes que delimitam a visibilidade sejam capturadas
     float margem = 1.0f;
-    bb_poly.min_x -= margem;
-    bb_poly.max_x += margem;
-    bb_poly.min_y -= margem;
-    bb_poly.max_y += margem;
+    BoundingBox bb_poly = criaBoundingBox(
+        getBBMinX(bb_poly_orig) - margem,
+        getBBMinY(bb_poly_orig) - margem,
+        getBBMaxX(bb_poly_orig) + margem,
+        getBBMaxY(bb_poly_orig) + margem
+    );
+    liberaBoundingBox(bb_poly_orig);
     
     Lista formas_para_destruir = criaLista();
     
@@ -432,11 +301,14 @@ static void destroiFormasEmColisao(Lista lista_formas, Poligono regiao_visibilid
         // Teste rápido: Bounding Box
         if (haInterseccaoBB(bb_poly, bb_forma)) {
             // Teste preciso: verifica se o centro da forma está dentro do polígono
-            if (formaEstaDentro(regiao_visibilidade, f)) {
+            if (formaIntersectaPoligono(regiao_visibilidade, f)) {
                 insereFinalLista(formas_para_destruir, f);
             }
         }
+        liberaBoundingBox(bb_forma);
     }
+
+    liberaBoundingBox(bb_poly);
     
     // Destrói as formas coletadas
     int count = 0;
@@ -477,8 +349,7 @@ static void destroiFormasEmColisao(Lista lista_formas, Poligono regiao_visibilid
 
 static void geraSVGVisibilidade(Poligono regiao_visibilidade, float x, float y, char* sufixo, Qry_t *qry) {
     if (strcmp(sufixo, "-") == 0) {
-        // Adiciona o polígono de visibilidade à lista para renderizar no SVG principal
-        // Cria uma estrutura para armazenar o polígono e a posição da bomba
+        // Adiciona o polígono de visibilidade à lista para renderizar no SVG principal 
         typedef struct {
             Poligono poligono;
             float bomb_x;
@@ -508,7 +379,7 @@ static void geraSVGVisibilidade(Poligono regiao_visibilidade, float x, float y, 
     
     strcat(nome_arq, "-");
     strcat(nome_arq, sufixo);
-    strcat(nome_arq, "-vis.svg");
+    strcat(nome_arq, ".svg");
     
     char *path = malloc(strlen(qry->caminho_output) + strlen(nome_arq) + 2);
     if (path) {
@@ -521,10 +392,11 @@ static void geraSVGVisibilidade(Poligono regiao_visibilidade, float x, float y, 
             
             // Adiciona margem ao viewBox
             float margem = 50.0f;
-            float vb_x = bb.min_x - margem;
-            float vb_y = bb.min_y - margem;
-            float vb_w = (bb.max_x - bb.min_x) + 2*margem;
-            float vb_h = (bb.max_y - bb.min_y) + 2*margem;
+            float vb_x = getBBMinX(bb) - margem;
+            float vb_y = getBBMinY(bb) - margem;
+            float vb_w = (getBBMaxX(bb) - getBBMinX(bb)) + 2*margem;
+            float vb_h = (getBBMaxY(bb) - getBBMinY(bb)) + 2*margem;
+            liberaBoundingBox(bb);
             
             fprintf(svg_file, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
             fprintf(svg_file, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"%.2f %.2f %.2f %.2f\">\n",
@@ -533,8 +405,8 @@ static void geraSVGVisibilidade(Poligono regiao_visibilidade, float x, float y, 
             fprintf(svg_file, "<polygon points=\"");
             Lista vertices = getVertices(regiao_visibilidade);
             for (Celula c = getInicioLista(vertices); c; c = getProxCelula(c)) {
-                Ponto* p = (Ponto*)getConteudoCelula(c);
-                fprintf(svg_file, "%.2f,%.2f ", p->x, p->y);
+                Ponto p = (Ponto)getConteudoCelula(c);
+                fprintf(svg_file, "%.2f,%.2f ", getPontoX(p), getPontoY(p));
             }
             fprintf(svg_file, "\" fill=\"rgba(255,200,0,0.3)\" stroke=\"orange\" stroke-width=\"2\"/>\n");
             fprintf(svg_file, "<circle cx=\"%.2f\" cy=\"%.2f\" r=\"5\" fill=\"red\"/>\n", x, y);
@@ -562,41 +434,33 @@ static void executa_comando_destruicao(Qry_t *qry, char *linha) {
     
     printf("  Comando DESTRUIÇÃO: x=%.2f, y=%.2f, sufixo=%s\n", x, y, sufixo);
     
-    // 1. Criar contexto de visibilidade
     Lista lista_formas = get_lista_cidade(qry->cidade);
     ContextoVisibilidade ctx = criaContextoVisibilidade(x, y, lista_formas, 
-                                                        qry->tipo_sort, qry->threshold);
-    
+                                                   qry->tipo_sort, qry->threshold); 
     if (!ctx) {
         printf("Erro ao criar contexto de visibilidade\n");
         return;
     }
     
-    // 2. Calcular polígono de visibilidade
     Poligono regiao_visibilidade = calculaPoligonoVisibilidade(ctx, x, y);
     
     if (regiao_visibilidade) {
-        // 3. Identificar e destruir formas dentro do polígono
+
         if (qry->txt_file) {
             fprintf(qry->txt_file, "\nBomba de destruição em (%.2f, %.2f):\n", x, y);
         }
         
         destroiFormasEmColisao(lista_formas, regiao_visibilidade, qry);
         
-        // 4. Gerar SVG da região de visibilidade
         geraSVGVisibilidade(regiao_visibilidade, x, y, sufixo, qry);
         
-        // Só libera o polígono se não foi armazenado para renderização posterior
         if (strcmp(sufixo, "-") != 0) {
             liberaPoligono(regiao_visibilidade);
         }
     }
     
-    // Libera contexto de visibilidade
     liberaContextoVisibilidade(ctx);
 }
-
-
 
 static void executa_comando_pintura(Qry_t *qry, char *linha) {
     strtok(linha, " ");
@@ -615,7 +479,7 @@ static void executa_comando_pintura(Qry_t *qry, char *linha) {
     
     printf("  Comando PINTURA: x=%.2f, y=%.2f, cor=%s, sufixo=%s\n", x, y, cor, sufixo);
     
-    // 1. Criar contexto de visibilidade
+
     Lista lista_formas = get_lista_cidade(qry->cidade);
     ContextoVisibilidade ctx = criaContextoVisibilidade(x, y, lista_formas, 
                                                         qry->tipo_sort, qry->threshold);
@@ -624,68 +488,62 @@ static void executa_comando_pintura(Qry_t *qry, char *linha) {
         printf("Erro ao criar contexto de visibilidade\n");
         return;
     }
-    
-    // 2. Calcular polígono de visibilidade
     Poligono regiao_visibilidade = calculaPoligonoVisibilidade(ctx, x, y);
     
     if (regiao_visibilidade) {
-        // 3. Identificar e pintar formas dentro do polígono
         if (qry->txt_file) {
             fprintf(qry->txt_file, "\nBomba de pintura em (%.2f, %.2f) com cor %s:\n", x, y, cor);
         }
         
-        BoundingBox bb_poly = getBoundingBox(regiao_visibilidade);
+        BoundingBox bb_poly_orig = getBoundingBox(regiao_visibilidade);
         
-        // Expande BB com margem de tolerância
         float margem = 1.0f;
-        bb_poly.min_x -= margem;
-        bb_poly.max_x += margem;
-        bb_poly.min_y -= margem;
-        bb_poly.max_y += margem;
+        BoundingBox bb_poly = criaBoundingBox(
+            getBBMinX(bb_poly_orig) - margem,
+            getBBMinY(bb_poly_orig) - margem,
+            getBBMaxX(bb_poly_orig) + margem,
+            getBBMaxY(bb_poly_orig) + margem
+        );
+        liberaBoundingBox(bb_poly_orig);
         
         int count = 0;
         for (Celula c = getInicioLista(lista_formas); c; c = getProxCelula(c)) {
             Forma f = getConteudoCelula(c);
             BoundingBox bb_forma = getBBForma(f);
             
-            // Teste rápido: Bounding Box
             if (haInterseccaoBB(bb_poly, bb_forma)) {
-                // Teste preciso: verifica se a forma está dentro do polígono
-                if (formaEstaDentro(regiao_visibilidade, f)) {
+
+                if (formaIntersectaPoligono(regiao_visibilidade, f)) {
                     tipo_forma tipo = getTipoForma(f);
                     void* data = getDataForma(f);
                     int id = -1;
                     char *tipo_str = "Desconhecido";
                     
-                    // Altera as cores da forma
+                   
+                    setCorPForma(f, cor);
+                    setCorBForma(f, cor);
+                    
+                    
                     switch(tipo) {
                         case CIRCLE:
                             id = getIDCirculo(data);
                             tipo_str = "Circulo";
-                            setCorPCirculo(data, cor);
-                            setCorBCirculo(data, cor);
                             break;
                         case RECTANGLE:
                             id = getIDRetangulo(data);
                             tipo_str = "Retangulo";
-                            setCorPRetangulo(data, cor);
-                            setCorBRetangulo(data, cor);
                             break;
                         case LINE:
                             id = getIDLinha(data);
                             tipo_str = "Linha";
-                            setCorLinha(data, cor);
                             break;
                         case TEXT:
                             id = getIDTexto(data);
                             tipo_str = "Texto";
-                            setCorPTexto(data, cor);
-                            setCorBTexto(data, cor);
                             break;
                         case ANTEPARO:
                             id = getIDAnteparo(data);
                             tipo_str = "Anteparo";
-                            setCorAnteparo(data, cor);
                             break;
                         default:
                             break;
@@ -697,25 +555,22 @@ static void executa_comando_pintura(Qry_t *qry, char *linha) {
                     count++;
                 }
             }
+            liberaBoundingBox(bb_forma);
         }
+        liberaBoundingBox(bb_poly);
         
         if (qry->txt_file) {
             fprintf(qry->txt_file, "Total de formas pintadas: %d\n", count);
         }
         
-        // 4. Gerar SVG da região de visibilidade
         geraSVGVisibilidade(regiao_visibilidade, x, y, sufixo, qry);
         
-        // Só libera o polígono se não foi armazenado para renderização posterior
         if (strcmp(sufixo, "-") != 0) {
             liberaPoligono(regiao_visibilidade);
         }
     }
-    
-    // Libera contexto de visibilidade
     liberaContextoVisibilidade(ctx);
 }
-
 
 static void executa_comando_clonagem(Qry_t *qry, char *linha) {
     strtok(linha, " ");
@@ -762,14 +617,16 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
                     x, y, dx, dy);
         }
         
-        BoundingBox bb_poly = getBoundingBox(regiao_visibilidade);
+        BoundingBox bb_poly_orig = getBoundingBox(regiao_visibilidade);
         
-        // Expande BB com margem de tolerância
         float margem = 1.0f;
-        bb_poly.min_x -= margem;
-        bb_poly.max_x += margem;
-        bb_poly.min_y -= margem;
-        bb_poly.max_y += margem;
+        BoundingBox bb_poly = criaBoundingBox(
+            getBBMinX(bb_poly_orig) - margem,
+            getBBMinY(bb_poly_orig) - margem,
+            getBBMaxX(bb_poly_orig) + margem,
+            getBBMaxY(bb_poly_orig) + margem
+        );
+        liberaBoundingBox(bb_poly_orig);
         
         Lista clones = criaLista();
         int count = 0;
@@ -781,47 +638,43 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
             // Teste rápido: Bounding Box
             if (haInterseccaoBB(bb_poly, bb_forma)) {
                 // Teste preciso: verifica se a forma está dentro do polígono
-                if (formaEstaDentro(regiao_visibilidade, f)) {
+                if (formaIntersectaPoligono(regiao_visibilidade, f)) {
                     tipo_forma tipo = getTipoForma(f);
                     void* data = getDataForma(f);
                     int id_original = -1;
                     int id_clone = ++qry->maior_id_atual;
                     char *tipo_str = "Desconhecido";
-                    void* clone_data = NULL;
+
+                    // Clona a forma usando a função do módulo forma
+                    Forma clone_forma = clonaForma(f, id_clone, dx, dy);
                     
-                    // Cria clone usando as funções de clonagem
-                    switch(tipo) {
-                        case CIRCLE:
-                            id_original = getIDCirculo(data);
-                            tipo_str = "Circulo";
-                            clone_data = clonaCirculo(data, id_clone, dx, dy);
-                            break;
-                        case RECTANGLE:
-                            id_original = getIDRetangulo(data);
-                            tipo_str = "Retangulo";
-                            clone_data = clonaRetangulo(data, id_clone, dx, dy);
-                            break;
-                        case LINE:
-                            id_original = getIDLinha(data);
-                            tipo_str = "Linha";
-                            clone_data = clonaLinha(data, id_clone, dx, dy);
-                            break;
-                        case TEXT:
-                            id_original = getIDTexto(data);
-                            tipo_str = "Texto";
-                            clone_data = clonaTexto(data, id_clone, dx, dy);
-                            break;
-                        case ANTEPARO:
-                            id_original = getIDAnteparo(data);
-                            tipo_str = "Anteparo";
-                            clone_data = clonaAnteparo(data, id_clone, dx, dy);
-                            break;
-                        default:
-                            break;
-                    }
-                    
-                    if (clone_data != NULL) {
-                        Forma clone_forma = criaForma(tipo, clone_data);
+                    if (clone_forma != NULL) {
+                        // Obtém ID original e nome do tipo para logging
+                        switch(tipo) {
+                            case CIRCLE:
+                                id_original = getIDCirculo(data);
+                                tipo_str = "Circulo";
+                                break;
+                            case RECTANGLE:
+                                id_original = getIDRetangulo(data);
+                                tipo_str = "Retangulo";
+                                break;
+                            case LINE:
+                                id_original = getIDLinha(data);
+                                tipo_str = "Linha";
+                                break;
+                            case TEXT:
+                                id_original = getIDTexto(data);
+                                tipo_str = "Texto";
+                                break;
+                            case ANTEPARO:
+                                id_original = getIDAnteparo(data);
+                                tipo_str = "Anteparo";
+                                break;
+                            default:
+                                break;
+                        }
+                        
                         insereFinalLista(clones, clone_forma);
                         
                         if (qry->txt_file && id_original != -1) {
@@ -832,9 +685,10 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
                     }
                 }
             }
+            liberaBoundingBox(bb_forma);
         }
+        liberaBoundingBox(bb_poly);
         
-        // Adiciona os clones às listas da cidade
         while (!listaVazia(clones)) {
             Forma clone = removeInicioLista(clones);
             insereFinalLista(lista_formas, clone);
@@ -856,21 +710,14 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
         }
     }
     
-    // Libera contexto de visibilidade
     liberaContextoVisibilidade(ctx);
 }
 
-
-/**
- * @brief Cria o arquivo SVG com o estado final da cidade após processamento do .qry
- */
 static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData) {
-    // Extrai o nome base do arquivo
     char *nome_orig = obter_nome_arquivo(fileData);
     char *nome_base = strrchr(nome_orig, '/');
     if(nome_base) nome_base++; else nome_base = nome_orig;
     
-    // Cria nome do arquivo SVG
     size_t name_len = strlen(nome_base);
     char *nome_arquivo = malloc(name_len + 1);
     if (nome_arquivo == NULL) {
@@ -882,7 +729,6 @@ static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData) {
     char *dot = strrchr(nome_arquivo, '.');
     if (dot) *dot = '\0';
     
-    // Monta o caminho completo do arquivo SVG
     size_t caminho_len = strlen(qry->caminho_output);
     size_t nome_len_final = strlen(nome_arquivo);
     size_t total_len = caminho_len + 1 + nome_len_final + 5; 
@@ -925,53 +771,10 @@ static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData) {
     while (!listaVazia(lista_svg_temp)) {
         Forma forma = removeFinalLista(lista_svg_temp);
         if (forma != NULL) {
-            tipo_forma tipo = getTipoForma(forma);
-            void* data = getDataForma(forma);
-            
-            if (tipo == CIRCLE) {
-                CIRCULO c = (CIRCULO)data;
-                fprintf(file, "<circle cx='%.2f' cy='%.2f' r='%.2f' fill='%s' stroke='%s'/>\n",
-                    getXCirculo(c), getYCirculo(c), getRaioCirculo(c), 
-                    getCorPCirculo(c), getCorBCirculo(c));
-                    
-            } else if (tipo == RECTANGLE) {
-                RETANGULO r = (RETANGULO)data;
-                fprintf(file, "<rect x='%.2f' y='%.2f' width='%.2f' height='%.2f' fill='%s' stroke='%s'/>\n",
-                    getXRetangulo(r), getYRetangulo(r), getLarguraRetangulo(r), 
-                    getAlturaRetangulo(r), getCorPRetangulo(r), getCorBRetangulo(r));
-                    
-            } else if (tipo == LINE) {
-                LINHA l = (LINHA)data;
-                fprintf(file, "<line x1='%.2f' y1='%.2f' x2='%.2f' y2='%.2f' stroke='%s'/>\n",
-                    getX1Linha(l), getY1Linha(l), getX2Linha(l), getY2Linha(l), getCorLinha(l));
-                    
-            } else if (tipo == TEXT) {
-                TEXTO t = (TEXTO)data;
-                char ancora = getAncoraTexto(t);
-                char *texto_ancora = "start";
-                
-                if (ancora == 'm' || ancora == 'M') {
-                    texto_ancora = "middle";
-                } else if (ancora == 'f' || ancora == 'F') {
-                    texto_ancora = "end";
-                } else if (ancora == 'i' || ancora == 'I') {
-                    texto_ancora = "start";
-                }
-                
-                fprintf(file, "<text x='%.2f' y='%.2f' fill='%s' stroke='%s' text-anchor='%s'>%s</text>\n",
-                    getXTexto(t), getYTexto(t), getCorPTexto(t), 
-                    getCorBTexto(t), texto_ancora, getTxtTexto(t));
-                    
-            } else if (tipo == ANTEPARO) {
-                Anteparo a = (Anteparo)data;
-                fprintf(file, "<line x1='%.2f' y1='%.2f' x2='%.2f' y2='%.2f' stroke='%s'/>\n",
-                    getX1Anteparo(a), getY1Anteparo(a), getX2Anteparo(a), 
-                    getY2Anteparo(a), getCorAnteparo(a));
-            }
+            escreveFormaSVG(forma, file);
         }
     }
     
-    // Renderiza polígonos de visibilidade (se houver)
     if (!listaVazia(qry->visibility_polygons)) {
         typedef struct {
             Poligono poligono;
@@ -989,8 +792,8 @@ static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData) {
             
             Lista vertices = getVertices(vis_data->poligono);
             for (Celula v = getInicioLista(vertices); v; v = getProxCelula(v)) {
-                Ponto* p = (Ponto*)getConteudoCelula(v);
-                fprintf(file, "%.2f,%.2f ", p->x, p->y);
+                Ponto p = (Ponto)getConteudoCelula(v);
+                fprintf(file, "%.2f,%.2f ", getPontoX(p), getPontoY(p));
             }
             
             fprintf(file, "\" fill=\"rgba(255,200,0,0.3)\" stroke=\"orange\" stroke-width=\"2\"/>\n");
@@ -1000,16 +803,13 @@ static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData) {
         }
     }
     
-    // Fecha o SVG
     fprintf(file, "</svg>\n");
     fclose(file);
     
-    // Libera memória
     liberaLista(lista_svg_temp);
     free(caminho_output_arquivo);
     free(nome_arquivo);
 }
-
 
 void desaloca_qry(Qry qry) {
     if (qry == NULL) {

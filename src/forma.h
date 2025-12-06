@@ -2,7 +2,8 @@
 #define FORMA_H
 
 #include <stdio.h>
-
+#include <stdbool.h>
+#include "poligono.h"
 /**
  * @file forma.h
  * @brief Módulo genérico para gerenciamento de formas geométricas.
@@ -106,5 +107,51 @@ void escreveFormaSVG(Forma f, FILE* arquivo);
  * @note Se f for NULL, a função não faz nada.
  */
 void desalocaForma(Forma f);
+
+
+
+/**
+ * @brief Calcula o Bounding Box de uma forma.
+ * 
+ * @param f Ponteiro para a forma.
+ * @return BoundingBox da forma.
+ */
+BoundingBox getBBForma(Forma f);
+
+/**
+ * @brief Verifica se uma forma está totalmente dentro de um polígono.
+ * 
+ * @param p Ponteiro para o polígono.
+ * @param f Ponteiro para a forma.
+ * @return true se a forma está dentro, false caso contrário.
+ */
+bool formaEstaDentro(Poligono p, Forma f);
+
+/**
+ * @brief Clona uma forma com novo ID e deslocamento.
+ * 
+ * @param f Ponteiro para a forma a ser clonada.
+ * @param novo_id Novo ID para o clone.
+ * @param dx Deslocamento em x.
+ * @param dy Deslocamento em y.
+ * @return Ponteiro para a forma clonada, ou NULL em caso de erro.
+ */
+Forma clonaForma(Forma f, int novo_id, float dx, float dy);
+
+/**
+ * @brief Define a cor de preenchimento de uma forma.
+ * 
+ * @param f Ponteiro para a forma.
+ * @param cor String com a cor de preenchimento.
+ */
+void setCorPForma(Forma f, const char* cor);
+
+/**
+ * @brief Define a cor de borda de uma forma.
+ * 
+ * @param f Ponteiro para a forma.
+ * @param cor String com a cor de borda.
+ */
+void setCorBForma(Forma f, const char* cor);
 
 #endif

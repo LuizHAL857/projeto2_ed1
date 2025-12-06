@@ -86,58 +86,6 @@ bool pontoVisivel(
 );
 
 /**
- * @brief Verifica se uma forma geométrica é visível.
- *
- * Determina se pelo menos uma parte da forma é visível a partir do observador.
- * Para diferentes tipos de formas, verifica pontos característicos:
- * - Círculos: centro
- * - Retângulos: centro
- * - Linhas: ponto médio
- * - Textos: ponto de âncora
- * - Anteparos: extremidades e ponto médio
- *
- * @param C Contexto de visibilidade previamente criado.
- * @param f Forma geométrica a ser testada.
- *
- * @return true se a forma (ou parte dela) é visível, false caso contrário.
- *
- * @note Para anteparos, verifica se qualquer dos três pontos (p1, pmid, p2)
- *       está visível, garantindo detecção de anteparos parcialmente visíveis.
- *
- * @see pontoVisivel()
- * @see getFormasVisiveis()
- */
-bool formaVisivel(
-    ContextoVisibilidade C,
-    Forma f
-);
-
-/**
- * @brief Retorna uma lista com todas as formas visíveis.
- *
- * Percorre a lista de formas original (fornecida em criaContextoVisibilidade)
- * e retorna uma nova lista contendo apenas as formas que são visíveis a partir
- * do observador.
- *
- * @param C Contexto de visibilidade previamente criado.
- *
- * @return Lista contendo ponteiros para as formas visíveis.
- *         Retorna uma lista vazia se nenhuma forma for visível.
- *         Retorna NULL em caso de erro.
- *
- * @note A lista retornada deve ser liberada pelo chamador usando liberaLista().
- * @note As formas contidas na lista NÃO devem ser desalocadas, pois são
- *       referências às formas originais.
- * @note A lista retornada é uma nova lista, independente da lista original.
- *
- * @see formaVisivel()
- * @see liberaLista()
- */
-Lista getFormasVisiveis(
-    ContextoVisibilidade C
-);
-
-/**
  * @brief Libera toda a memória alocada para o contexto de visibilidade.
  *
  * Desaloca todas as estruturas internas do contexto, incluindo:

@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include "lista.h"
+#include "ponto.h"
 
 /**
  * @brief Tipo opaco para representar um polígono.
@@ -10,32 +11,106 @@
 typedef void* Poligono;
 
 /**
- * @brief Estrutura para representar um ponto 2D.
+ * @brief Tipo opaco para representar um segmento de reta.
  */
-typedef struct {
-    float x;
-    float y;
-} Ponto;
+typedef void* Segmento;
 
 /**
- * @brief Estrutura para representar um segmento de reta.
+ * @brief Tipo opaco para representar um bounding box.
  */
-typedef struct {
-    Ponto p1;
-    Ponto p2;
-} Segmento;
+typedef void* BoundingBox;
 
 /**
- * @brief Estrutura para representar um bounding box.
+ * @brief Forward declaration para Forma (definido em forma.h).
  */
-typedef struct {
-    float min_x;
-    float min_y;
-    float max_x;
-    float max_y;
-} BoundingBox;
+typedef void* Forma;
 
-/* ================= Criação e liberação ================= */
+/* ================= Segmento - Criação e acesso ================= */
+
+/**
+ * @brief Cria um novo segmento.
+ * 
+ * @param p1 Primeiro ponto do segmento.
+ * @param p2 Segundo ponto do segmento.
+ * @return Ponteiro para o segmento criado.
+ */
+Segmento criaSegmento(Ponto p1, Ponto p2);
+
+/**
+ * @brief Libera a memória de um segmento.
+ * 
+ * @param s Ponteiro para o segmento.
+ */
+void liberaSegmento(Segmento s);
+
+/**
+ * @brief Obtém o primeiro ponto do segmento.
+ * 
+ * @param s Ponteiro para o segmento.
+ * @return Primeiro ponto.
+ */
+Ponto getSegmentoP1(Segmento s);
+
+/**
+ * @brief Obtém o segundo ponto do segmento.
+ * 
+ * @param s Ponteiro para o segmento.
+ * @return Segundo ponto.
+ */
+Ponto getSegmentoP2(Segmento s);
+
+/* ================= BoundingBox - Criação e acesso ================= */
+
+/**
+ * @brief Cria um novo bounding box.
+ * 
+ * @param min_x Coordenada x mínima.
+ * @param min_y Coordenada y mínima.
+ * @param max_x Coordenada x máxima.
+ * @param max_y Coordenada y máxima.
+ * @return Ponteiro para o bounding box criado.
+ */
+BoundingBox criaBoundingBox(float min_x, float min_y, float max_x, float max_y);
+
+/**
+ * @brief Libera a memória de um bounding box.
+ * 
+ * @param bb Ponteiro para o bounding box.
+ */
+void liberaBoundingBox(BoundingBox bb);
+
+/**
+ * @brief Obtém a coordenada x mínima do bounding box.
+ * 
+ * @param bb Ponteiro para o bounding box.
+ * @return Coordenada x mínima.
+ */
+float getBBMinX(BoundingBox bb);
+
+/**
+ * @brief Obtém a coordenada y mínima do bounding box.
+ * 
+ * @param bb Ponteiro para o bounding box.
+ * @return Coordenada y mínima.
+ */
+float getBBMinY(BoundingBox bb);
+
+/**
+ * @brief Obtém a coordenada x máxima do bounding box.
+ * 
+ * @param bb Ponteiro para o bounding box.
+ * @return Coordenada x máxima.
+ */
+float getBBMaxX(BoundingBox bb);
+
+/**
+ * @brief Obtém a coordenada y máxima do bounding box.
+ * 
+ * @param bb Ponteiro para o bounding box.
+ * @return Coordenada y máxima.
+ */
+float getBBMaxY(BoundingBox bb);
+
 
 /**
  * @brief Cria um novo polígono vazio.
@@ -137,5 +212,21 @@ int getNumSegmentos(Poligono p);
  * @return true se intersectam, false caso contrário.
  */
 bool haInterseccaoBB(BoundingBox a, BoundingBox b);
+
+/**
+ * @brief Verifica se uma forma intersecta ou está dentro de um polígono.
+ * 
+ * Esta função realiza verificações geométricas precisas para determinar se
+ * há qualquer interseção entre a forma e o polígono, incluindo:
+ * - Teste de bounding box
+ * - Vértices da forma dentro do polígono
+ * - Vértices do polígono dentro da forma
+ * - Interseção de arestas
+ * 
+ * @param p Ponteiro para o polígono.
+ * @param f Ponteiro para a forma.
+ * @return true se há interseção ou contenção, false caso contrário.
+ */
+bool formaIntersectaPoligono(Poligono p, Forma f);
 
 #endif

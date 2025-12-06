@@ -26,14 +26,14 @@ typedef struct {
     float ang1, ang2;
     float dist;      
     float distKey;  
-} Segmento;
+} SegmentoVis;
 
 typedef enum { EVT_INICIO, EVT_FIM } TipoEv;
 
 typedef struct {
     float angulo;
     TipoEv tipo;
-    Segmento* seg;
+    SegmentoVis* seg;
 } Evento;
 
 typedef struct {
@@ -42,11 +42,11 @@ typedef struct {
     Lista segmentos;
     Evento* eventos;
     int n_eventos;
-    Segmento* anteparos_temp[4];  
+    SegmentoVis* anteparos_temp[4];  
     bool tem_anteparos_temp;
 } CtxVis;
 
-// ------------------------ Geometria ------------------------
+
 
 static float normalizaAngulo(float a) {
     while (a >  M_PI) a -= 2*M_PI;
@@ -58,7 +58,7 @@ static float anguloPonto(float bx, float by, float px, float py) {
     return normalizaAngulo(atan2(py - by, px - bx));
 }
 
-static void atualizarDist(Segmento* s, float bx, float by, float dx, float dy) {
+static void atualizarDist(SegmentoVis* s, float bx, float by, float dx, float dy) {
     // Translada segmento para origem da bomba
     float x1 = s->x1 - bx;
     float y1 = s->y1 - by;
@@ -99,8 +99,8 @@ static void atualizarDist(Segmento* s, float bx, float by, float dx, float dy) {
 
 static int cmpSeg(const void* a, const void* b, void* ctx) {
     (void)ctx; 
-    const Segmento* sa = a;
-    const Segmento* sb = b;
+    const SegmentoVis* sa = a;
+    const SegmentoVis* sb = b;
     if (sa->distKey < sb->distKey) return -1;
     if (sa->distKey > sb->distKey) return 1;
     return (sa < sb) ? -1 : 1;
@@ -143,15 +143,15 @@ static ArvoreBinaria construirAtivos(CtxVis* ctx, float ang) {
 }
 
 
-static bool criaAnteparosTemporarios(Lista lista_formas, float margem, Segmento** anteparos_temp) {
-    if (!lista_formas || listaVazia(lista_formas)) return false;
+static bool criaAnteparosTemporarios(Lista lista_formas, float margem, float bx, float by, SegmentoVis** anteparos_temp) {
+    // Inicializa os limites com a posição da bomba
     
-    // Inicializa os limites do bounding box
-    float min_x = INFINITY, max_x = -INFINITY;
-    float min_y = INFINITY, max_y = -INFINITY;
+    float min_x = bx, max_x = bx;
+    float min_y = by, max_y = by;
     bool encontrou_forma = false;
     
-    // Percorre todas as formas para calcular o bounding box
+    if (lista_formas && !listaVazia(lista_formas)) {
+        // Percorre todas as formas para expandir o bounding box
     for (Celula c = getInicioLista(lista_formas); c; c = getProxCelula(c)) {
         Forma f = getConteudoCelula(c);
         tipo_forma tipo = getTipoForma(f);
@@ -258,17 +258,19 @@ static bool criaAnteparosTemporarios(Lista lista_formas, float margem, Segmento*
         }
     }
     
-    if (!encontrou_forma) return false;
+    }
     
-    // Adiciona a margem ao bounding box
+  
+    
+   
     min_x -= margem;
     max_x += margem;
     min_y -= margem;
     max_y += margem;
     
     // Cria os 4 anteparos temporários
-    // Anteparo superior (horizontal, y = min_y)
-    anteparos_temp[0] = malloc(sizeof(Segmento));
+    // Anteparo superior
+    anteparos_temp[0] = malloc(sizeof(SegmentoVis));
     anteparos_temp[0]->x1 = min_x;
     anteparos_temp[0]->y1 = min_y;
     anteparos_temp[0]->x2 = max_x;
@@ -277,8 +279,8 @@ static bool criaAnteparosTemporarios(Lista lista_formas, float margem, Segmento*
     anteparos_temp[0]->dist = INFINITY;
     anteparos_temp[0]->distKey = INFINITY;
     
-    // Anteparo direito (vertical, x = max_x)
-    anteparos_temp[1] = malloc(sizeof(Segmento));
+    // Anteparo direito 
+    anteparos_temp[1] = malloc(sizeof(SegmentoVis));
     anteparos_temp[1]->x1 = max_x;
     anteparos_temp[1]->y1 = min_y;
     anteparos_temp[1]->x2 = max_x;
@@ -287,8 +289,8 @@ static bool criaAnteparosTemporarios(Lista lista_formas, float margem, Segmento*
     anteparos_temp[1]->dist = INFINITY;
     anteparos_temp[1]->distKey = INFINITY;
     
-    // Anteparo inferior (horizontal, y = max_y)
-    anteparos_temp[2] = malloc(sizeof(Segmento));
+    // Anteparo inferior
+    anteparos_temp[2] = malloc(sizeof(SegmentoVis));
     anteparos_temp[2]->x1 = max_x;
     anteparos_temp[2]->y1 = max_y;
     anteparos_temp[2]->x2 = min_x;
@@ -297,8 +299,8 @@ static bool criaAnteparosTemporarios(Lista lista_formas, float margem, Segmento*
     anteparos_temp[2]->dist = INFINITY;
     anteparos_temp[2]->distKey = INFINITY;
     
-    // Anteparo esquerdo (vertical, x = min_x)
-    anteparos_temp[3] = malloc(sizeof(Segmento));
+    // Anteparo esquerdo
+    anteparos_temp[3] = malloc(sizeof(SegmentoVis));
     anteparos_temp[3]->x1 = min_x;
     anteparos_temp[3]->y1 = max_y;
     anteparos_temp[3]->x2 = min_x;
@@ -327,24 +329,25 @@ ContextoVisibilidade criaContextoVisibilidade(float x, float y, Lista lista_form
     
     // Cria anteparos temporários para delimitar a região de visibilidade
     
-    if (criaAnteparosTemporarios(lista_formas, 10.0f, ctx->anteparos_temp)) {
+    
+    if (criaAnteparosTemporarios(lista_formas, 1000.0f, x, y, ctx->anteparos_temp)) {
         ctx->tem_anteparos_temp = true;
-        // Adiciona os anteparos temporários à lista de segmentos
+        
         for (int i = 0; i < 4; i++) {
-            Segmento* s = ctx->anteparos_temp[i];
+            SegmentoVis* s = ctx->anteparos_temp[i];
             s->ang1 = anguloPonto(x, y, s->x1, s->y1);
             s->ang2 = anguloPonto(x, y, s->x2, s->y2);
             insereFinalLista(ctx->segmentos, s);
         }
     }
 
-    // Coleta anteparos das formas
+   
     for (Celula c = getInicioLista(lista_formas); c; c = getProxCelula(c)) {
         Forma f = getConteudoCelula(c);
         if (getTipoForma(f) != ANTEPARO) continue;
 
         Anteparo a = getDataForma(f);
-        Segmento* s = malloc(sizeof(Segmento));
+        SegmentoVis* s = malloc(sizeof(SegmentoVis));
         s->x1 = getX1Anteparo(a); s->y1 = getY1Anteparo(a);
         s->x2 = getX2Anteparo(a); s->y2 = getY2Anteparo(a);
         s->source = a;
@@ -358,14 +361,14 @@ ContextoVisibilidade criaContextoVisibilidade(float x, float y, Lista lista_form
 
     // Conta quantos segmentos cruzam o corte -PI/+PI para alocar eventos suficientes
     int nSeg = getTamanhoLista(ctx->segmentos);
-    // int nEventosMax = 2 * nSeg; // Base - removido para evitar warning
+   
     
    
     ctx->eventos = malloc(4 * nSeg * sizeof(Evento));
     
     int idx = 0;
     for (Celula c = getInicioLista(ctx->segmentos); c; c = getProxCelula(c)) {
-        Segmento* s = getConteudoCelula(c);
+        SegmentoVis* s = getConteudoCelula(c);
         float a1 = s->ang1;
         float a2 = s->ang2;
         
@@ -375,15 +378,15 @@ ContextoVisibilidade criaContextoVisibilidade(float x, float y, Lista lista_form
             float menor = fmin(a1, a2);
             float maior = fmax(a1, a2);
             
-            // Intervalo 1: [maior, PI]
+            
             ctx->eventos[idx++] = (Evento){ maior, EVT_INICIO, s };
             ctx->eventos[idx++] = (Evento){ M_PI,  EVT_FIM,    s };
             
-            // Intervalo 2: [-PI, menor]
+           
             ctx->eventos[idx++] = (Evento){ -M_PI, EVT_INICIO, s };
             ctx->eventos[idx++] = (Evento){ menor, EVT_FIM,    s };
         } else {
-            // Caso normal: [min, max]
+           
             float menor = fmin(a1, a2);
             float maior = fmax(a1, a2);
             ctx->eventos[idx++] = (Evento){ menor, EVT_INICIO, s };
@@ -415,7 +418,7 @@ ContextoVisibilidade criaContextoVisibilidade(float x, float y, Lista lista_form
     return ctx;
 }
 
-// ------------------------ Visibilidade de ponto ------------------------
+
 
 
 static bool encoberto(CtxVis* ctx, float px, float py, ArvoreBinaria ativos) {
@@ -441,7 +444,7 @@ static bool encoberto(CtxVis* ctx, float px, float py, ArvoreBinaria ativos) {
     
     bool bloqueado = false;
     for (int i = 0; i < tamanho; i++) {
-        Segmento* s = (Segmento*)segmentos[i];
+        SegmentoVis* s = (SegmentoVis*)segmentos[i];
         
         // Verifica se a BOMBA está sobre este segmento
        
@@ -499,7 +502,7 @@ static bool encoberto(CtxVis* ctx, float px, float py, ArvoreBinaria ativos) {
                 float dot = (px - s->x1) * (s->x2 - s->x1) + (py - s->y1) * (s->y2 - s->y1);
                 float t = dot / (seg_len * seg_len);
                 if (t >= -EPSILON && t <= 1.0 + EPSILON) {
-                    // Ponto está sobre o segmento, ignora
+                  
                     continue;
                 }
             }
@@ -532,84 +535,17 @@ bool pontoVisivel(ContextoVisibilidade C, float px, float py) {
     return visivel;
 }
 
-// ------------------------ Visibilidade de forma ------------------------
 
-bool formaVisivel(ContextoVisibilidade C, Forma f) {
-    if (!C || !f) return false;
 
-    float xs[16], ys[16]; int n = 0;
-
-    switch (getTipoForma(f)) {
-        case CIRCLE: {
-            CIRCULO c = getDataForma(f);
-            float cx = getXCirculo(c), cy = getYCirculo(c), r = getRaioCirculo(c);
-            xs[n]=cx; ys[n]=cy; n++;
-            for(int i=0;i<8;i++){ float ang=i*M_PI/4; xs[n]=cx+r*cos(ang); ys[n]=cy+r*sin(ang); n++; }
-        } break;
-
-        case RECTANGLE: {
-            RETANGULO r = getDataForma(f);
-            float x=getXRetangulo(r), y=getYRetangulo(r), w=getLarguraRetangulo(r), h=getAlturaRetangulo(r);
-            xs[n]=x; ys[n]=y; n++; xs[n]=x+w; ys[n]=y; n++; xs[n]=x; ys[n]=y+h; n++; xs[n]=x+w; ys[n]=y+h; n++;
-            xs[n]=x+w/2; ys[n]=y+h/2; n++;
-        } break;
-
-        case LINE: {
-            LINHA l=getDataForma(f);
-            float x1=getX1Linha(l), y1=getY1Linha(l), x2=getX2Linha(l), y2=getY2Linha(l);
-            xs[n]=x1; ys[n]=y1; n++; xs[n]=x2; ys[n]=y2; n++; xs[n]=(x1+x2)/2; ys[n]=(y1+y2)/2; n++;
-        } break;
-
-        case TEXT: {
-            TEXTO t=getDataForma(f); float xt=getXTexto(t), yt=getYTexto(t); char anc=getAncoraTexto(t); char* txt=getTxtTexto(t);
-            int len=strlen(txt); float L=10.0f*len; float x1,y1,x2,y2;
-            if(anc=='i'||anc=='I'){x1=xt;y1=yt;x2=xt+L;y2=yt;}
-            else if(anc=='f'||anc=='F'){x1=xt-L;y1=yt;x2=xt;y2=yt;}
-            else{x1=xt-L/2;y1=yt;x2=xt+L/2;y2=yt;}
-            xs[n]=x1; ys[n]=y1; n++; xs[n]=x2; ys[n]=y2; n++; xs[n]=(x1+x2)/2; ys[n]=(y1+y2)/2; n++;
-        } break;
-
-        case ANTEPARO: {
-            Anteparo a=getDataForma(f);
-            float x1=getX1Anteparo(a), y1=getY1Anteparo(a), x2=getX2Anteparo(a), y2=getY2Anteparo(a);
-            xs[n]=x1; ys[n]=y1; n++; xs[n]=x2; ys[n]=y2; n++; xs[n]=(x1+x2)/2; ys[n]=(y1+y2)/2; n++;
-        } break;
-
-        default: break;
-    }
-
-    for(int i=0;i<n;i++)
-        if(pontoVisivel(C, xs[i], ys[i]))
-            return true;
-
-    return false;
-}
-
-// ------------------------ Lista de formas visíveis ------------------------
-
-Lista getFormasVisiveis(ContextoVisibilidade C) {
-    if(!C) return NULL;
-    CtxVis* ctx=(CtxVis*)C;
-    Lista L=criaLista();
-
-    for(Celula c=getInicioLista(ctx->formas); c; c=getProxCelula(c)){
-        Forma f=getConteudoCelula(c);
-        if(formaVisivel(C,f)) insereFinalLista(L,f);
-    }
-
-    return L;
-}
-
-// ------------------------ Liberação ------------------------
 
 void liberaContextoVisibilidade(ContextoVisibilidade C) {
     if(!C) return;
     CtxVis* ctx=(CtxVis*)C;
 
-    // Libera os segmentos
+   
     
     while(!listaVazia(ctx->segmentos)){
-        Segmento* s=removeInicioLista(ctx->segmentos);
+        SegmentoVis* s=removeInicioLista(ctx->segmentos);
         free(s);
     }
     liberaLista(ctx->segmentos);
