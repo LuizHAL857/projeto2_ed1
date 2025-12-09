@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Estrutura interna do nó
+
 typedef struct NoImpl {
     void* dado;
     struct NoImpl* esq;
@@ -10,7 +10,6 @@ typedef struct NoImpl {
     struct NoImpl* pai;
 } NoImpl;
 
-// Estrutura interna da árvore
 typedef struct {
     NoImpl* raiz;
     FuncaoComparacao comparar;
@@ -18,13 +17,8 @@ typedef struct {
     int tamanho;
 } ArvoreImpl;
 
-// ============================================================================
-// Funções Auxiliares Privadas
-// ============================================================================
 
-/**
- * Cria um novo nó.
- */
+
 static NoImpl* criar_no(void* dado) {
     NoImpl* no = malloc(sizeof(NoImpl));
     if (no == NULL) {
@@ -39,9 +33,6 @@ static NoImpl* criar_no(void* dado) {
     return no;
 }
 
-/**
- * Encontra o nó com o menor valor em uma subárvore.
- */
 static NoImpl* encontrar_minimo_interno(NoImpl* no) {
     if (no == NULL) {
         return NULL;
@@ -54,9 +45,7 @@ static NoImpl* encontrar_minimo_interno(NoImpl* no) {
     return no;
 }
 
-/**
- * Encontra o nó com o maior valor em uma subárvore.
- */
+
 static NoImpl* encontrar_maximo_interno(NoImpl* no) {
     if (no == NULL) {
         return NULL;
@@ -69,9 +58,7 @@ static NoImpl* encontrar_maximo_interno(NoImpl* no) {
     return no;
 }
 
-/**
- * Substitui uma subárvore por outra como filha de seu pai.
- */
+
 static void transplantar(ArvoreImpl* arvore, NoImpl* u, NoImpl* v) {
     if (u->pai == NULL) {
         arvore->raiz = v;
@@ -86,9 +73,6 @@ static void transplantar(ArvoreImpl* arvore, NoImpl* u, NoImpl* v) {
     }
 }
 
-/**
- * Limpa recursivamente uma subárvore.
- */
 static void limpar_subarvore(NoImpl* no, FuncaoDesalocacao desalocar) {
     if (no == NULL) {
         return;
@@ -104,9 +88,7 @@ static void limpar_subarvore(NoImpl* no, FuncaoDesalocacao desalocar) {
     free(no);
 }
 
-// ============================================================================
-// Implementação da API Pública
-// ============================================================================
+
 
 ArvoreBinaria criaArvoreBinaria(FuncaoComparacao comparar, void* contexto) {
     if (comparar == NULL) {
@@ -137,14 +119,14 @@ NoArvore insereArvoreBinaria(ArvoreBinaria arvore, void* dado) {
         return NULL;
     }
 
-    // Caso árvore vazia
+   
     if (impl->raiz == NULL) {
         impl->raiz = novo_no;
         impl->tamanho++;
         return (NoArvore)novo_no;
     }
 
-    // Encontra ponto de inserção
+   
     NoImpl* atual = impl->raiz;
     NoImpl* pai = NULL;
 
@@ -159,7 +141,7 @@ NoArvore insereArvoreBinaria(ArvoreBinaria arvore, void* dado) {
         }
     }
 
-    // Insere como filho do pai
+    
     novo_no->pai = pai;
     int cmp = impl->comparar(dado, pai->dado, impl->contexto);
 
@@ -181,15 +163,15 @@ void removeNoArvore(ArvoreBinaria arvore, NoArvore no) {
     ArvoreImpl* impl = (ArvoreImpl*)arvore;
     NoImpl* z = (NoImpl*)no;
 
-    // Caso 1: Nó não tem filho esquerdo
+    
     if (z->esq == NULL) {
         transplantar(impl, z, z->dir);
     }
-    // Caso 2: Nó não tem filho direito
+    
     else if (z->dir == NULL) {
         transplantar(impl, z, z->esq);
     }
-    // Caso 3: Nó tem dois filhos
+   
     else {
         // Encontra sucessor (mínimo na subárvore direita)
         NoImpl* y = encontrar_minimo_interno(z->dir);
@@ -223,7 +205,7 @@ bool removeArvoreBinaria(ArvoreBinaria arvore, void* dado) {
         int cmp = impl->comparar(dado, atual->dado, impl->contexto);
 
         if (cmp == 0) {
-            // Encontrou
+            
             removeNoArvore(arvore, (NoArvore)atual);
             return true;
         } else if (cmp < 0) {
@@ -309,10 +291,6 @@ int tamanhoArvore(ArvoreBinaria arvore) {
     return impl->tamanho;
 }
 
-int alturaArvore(ArvoreBinaria arvore) {
-    (void)arvore; // Parâmetro não utilizado nesta implementação simplificada
-    return 0; 
-}
 
 void limpaArvoreBinaria(ArvoreBinaria arvore, FuncaoDesalocacao desalocar) {
     if (arvore == NULL) {
@@ -334,9 +312,7 @@ void liberaArvoreBinaria(ArvoreBinaria arvore, FuncaoDesalocacao desalocar) {
     free(arvore);
 }
 
-// ============================================================================
-// Funções de Travessia e Conversão (Mantidas para compatibilidade)
-// ============================================================================
+
 
 static void percorre_em_ordem_rec(NoImpl* no, void (*visita)(void*, void*), void* contexto) {
     if (no == NULL) return;
@@ -365,7 +341,7 @@ void** arvoreParaArray(ArvoreBinaria arvore, int* tamanho) {
         int idx;
     } ctx = { array, 0 };
 
-    // Função local simulada usando ponteiro de função
+   
     void preencher(void* dado, void* c) {
         struct { void** arr; int idx; } *contexto = c;
         contexto->arr[contexto->idx++] = dado;

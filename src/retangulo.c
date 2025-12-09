@@ -202,8 +202,8 @@ RETANGULO clonaRetangulo(RETANGULO r, int novo_id, float dx, float dy){
     return criaRetangulo(novo_id,
                         rTemp->x + dx,
                         rTemp->y + dy,
-                        rTemp->largura,
                         rTemp->altura,
+                        rTemp->largura,
                         rTemp->corB,
                         rTemp->corP);
 }

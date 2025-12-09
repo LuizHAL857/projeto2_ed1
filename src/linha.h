@@ -144,8 +144,10 @@ float calculoAreaLinha(LINHA l);
  */
 void desalocaLinha(LINHA l);
 
-#endif
 /**
  * @brief Cria um clone da linha com novo ID e deslocamento.
  */
 LINHA clonaLinha(LINHA l, int novo_id, float dx, float dy);
+
+#endif
+

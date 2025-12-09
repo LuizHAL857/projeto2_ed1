@@ -12,7 +12,7 @@
 
 #define EPSILON 1e-9
 
-/* ================= Definições das estruturas ================= */
+
 
 typedef struct {
     float x;
@@ -36,7 +36,7 @@ typedef struct {
     Lista segmentos;  // Lista de stSegmento*
 } stPoligono;
 
-/* ================= Segmento - Implementação ================= */
+
 
 
 Segmento criaSegmento(Ponto p1, Ponto p2) {
@@ -72,7 +72,7 @@ Ponto getSegmentoP2(Segmento seg) {
     return criaPonto(s->p2.x, s->p2.y);
 }
 
-/* ================= BoundingBox - Implementação ================= */
+
 
 BoundingBox criaBoundingBox(float min_x, float min_y, float max_x, float max_y) {
     stBoundingBox* bb = malloc(sizeof(stBoundingBox));
@@ -112,10 +112,7 @@ float getBBMaxY(BoundingBox bb) {
     return b->max_y;
 }
 
-/* ================= Polígono - Implementação ================= */
 
-
-/* ================= Criação e liberação ================= */
 
 Poligono criaPoligono() {
     stPoligono* p = malloc(sizeof(stPoligono));
@@ -183,7 +180,7 @@ void insereSegmento(Poligono pol, Segmento seg) {
 }
 
 
-/* ================= Consultas ================= */
+
 
 BoundingBox getBoundingBox(Poligono pol) {
     if (!pol) return criaBoundingBox(INFINITY, INFINITY, -INFINITY, -INFINITY);
@@ -217,8 +214,7 @@ bool isInside(Poligono pol, Ponto ponto) {
     
     if (listaVazia(p->vertices)) return false;
     
-    // Algoritmo de ray casting
-    // Lança um raio horizontal para a direita e conta quantas vezes cruza as arestas
+    
     int num_vertices = getTamanhoLista(p->vertices);
     if (num_vertices < 3) return false;
     
@@ -241,7 +237,7 @@ bool isInside(Poligono pol, Ponto ponto) {
         c2 = getProxCelula(c2);
     }
     
-    // Fecha o polígono: última aresta conecta último vértice ao primeiro
+   
     stPonto* p_ultimo = (stPonto*)getConteudoCelula(c1);
     stPonto* p_primeiro = (stPonto*)getConteudoCelula(getInicioLista(p->vertices));
     
@@ -298,7 +294,7 @@ bool haInterseccaoBB(BoundingBox a, BoundingBox b) {
     }
     return true;
 }
-// Função auxiliar: verifica se dois segmentos se intersectam
+
 static bool segmentosIntersectam(float x1, float y1, float x2, float y2,
                                   float x3, float y3, float x4, float y4) {
     float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
@@ -310,7 +306,7 @@ static bool segmentosIntersectam(float x1, float y1, float x2, float y2,
     return (t >= 0 && t <= 1 && u >= 0 && u <= 1);
 }
 
-// Função auxiliar: distância de ponto a segmento
+
 static float distanciaPontoSegmento(float px, float py, float x1, float y1, float x2, float y2) {
     float dx = x2 - x1;
     float dy = y2 - y1;
@@ -340,7 +336,7 @@ bool formaIntersectaPoligono(Poligono p, Forma f) {
     tipo_forma tipo = getTipoForma(f);
     void* data = getDataForma(f);
     
-    // 1. Teste de bounding box
+   
     BoundingBox bb_forma = getBBForma(f);
     BoundingBox bb_poly = getBoundingBox(p);
     
@@ -394,7 +390,7 @@ bool formaIntersectaPoligono(Poligono p, Forma f) {
                 v_prev = v_curr;
             }
             
-            // Fecha o polígono
+            
             if (segmentosIntersectam(x1, y1, x2, y2,
                                     getPontoX(v_prev), getPontoY(v_prev),
                                     getPontoX(v_first), getPontoY(v_first))) {
@@ -520,7 +516,7 @@ bool formaIntersectaPoligono(Poligono p, Forma f) {
                 v_prev = v_curr;
             }
             
-            // Fecha o polígono
+           
             float dist = distanciaPontoSegmento(cx, cy,
                                                getPontoX(v_prev), getPontoY(v_prev),
                                                getPontoX(v_first), getPontoY(v_first));
@@ -589,7 +585,7 @@ bool formaIntersectaPoligono(Poligono p, Forma f) {
                 v_prev = v_curr;
             }
             
-            // Fecha o polígono
+            
             if (segmentosIntersectam(x1, y1, x2, y2,
                                     getPontoX(v_prev), getPontoY(v_prev),
                                     getPontoX(v_first), getPontoY(v_first))) {
@@ -636,7 +632,7 @@ bool formaIntersectaPoligono(Poligono p, Forma f) {
                 v_prev = v_curr;
             }
             
-            // Fecha o polígono
+            
             if (segmentosIntersectam(x1, y1, x2, y2,
                                     getPontoX(v_prev), getPontoY(v_prev),
                                     getPontoX(v_first), getPontoY(v_first))) {

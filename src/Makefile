@@ -8,7 +8,7 @@ ALUNO = LuizH
 CC = gcc
 
 # Flags de compilação
-CFLAGS = -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb
+CFLAGS = -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack
 
 # Diretório de código-fonte
 SRC_DIR = .

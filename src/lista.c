@@ -3,7 +3,7 @@
 #include "lista.h"
 
 typedef struct stCelula {
-    Conteudo chave;
+    void* chave;
     struct stCelula *prox;
     struct stCelula *ant;
 } stCelula;  
@@ -22,7 +22,7 @@ Lista criaLista() {
     return ((stLista*)l);
 }
 
-void insereLista(Lista l, Conteudo chave) {
+void insereLista(Lista l, void* chave) {
     stCelula *new = malloc(sizeof(stCelula));
     new->chave = chave;
     new->ant = NULL;
@@ -42,7 +42,7 @@ void insereLista(Lista l, Conteudo chave) {
     ((stLista*)l)->tam++;
 }
 
-Conteudo getConteudoInicioLista(Lista l) {
+void* getConteudoInicioLista(Lista l) {
     return ((stLista*)l)->inicio->chave;
 }
 
@@ -58,7 +58,7 @@ void* removeInicioLista(Lista l) {
     if (lista->inicio == NULL) return NULL;   // lista vazia
 
     stCelula *aux = lista->inicio;
-    Conteudo c = aux->chave;
+    void* c = aux->chave;
 
     lista->inicio = aux->prox;
     
@@ -83,7 +83,7 @@ void* removeFinalLista(Lista l) {
     if (lista->fim == NULL) return NULL;  // lista vazia
     
     stCelula *ultimo = lista->fim;
-    Conteudo c = ultimo->chave;
+    void* c = ultimo->chave;
     
     if (lista->fim->ant == NULL) {
         // Apenas um elemento
@@ -109,7 +109,7 @@ int getTamanhoLista(Lista l) {
 void copiaListas(Lista copia, Lista fonte) {
     Celula aux = ((stLista*)fonte)->inicio;
     while(aux != NULL) {
-        insereLista(copia, ((stCelula*)aux)->chave);
+        insereFinalLista(copia, ((stCelula*)aux)->chave);
         aux = ((stCelula*)aux)->prox;
     }
 }
@@ -133,11 +133,11 @@ Celula getProxCelula(Celula p) {
     else return NULL;
 }
 
-Conteudo getConteudoCelula(Celula p) {
+void* getConteudoCelula(Celula p) {
     return ((stCelula*)p)->chave;
 }
 
-bool searchAndRemoveLista(Lista lista, Conteudo chave) {
+bool searchAndRemoveLista(Lista lista, void* chave) {
     if (lista == NULL || ((stLista*)lista)->inicio == NULL) return false;
 
     Celula atual = ((stLista*)lista)->inicio;
@@ -172,7 +172,7 @@ bool searchAndRemoveLista(Lista lista, Conteudo chave) {
     return false;
 }
 
-void removeCelula(Lista lista, Celula alvo, Celula anterior) {
+void removeCelula(Lista lista, Celula alvo, bool liberarConteudo) {
     if (alvo == NULL) return;
 
     // Atualizar ponteiro anterior
@@ -194,7 +194,7 @@ void removeCelula(Lista lista, Celula alvo, Celula anterior) {
     ((stLista*)lista)->tam--;
 }
 
-void insereFinalLista(Lista l, Conteudo chave) {
+void insereFinalLista(Lista l, void* chave) {
     stCelula *novo = malloc(sizeof(stCelula));
     novo->chave = chave;
     novo->prox = NULL;
@@ -221,7 +221,7 @@ bool listaVazia(Lista l) {
     return (((stLista*)l)->inicio == NULL || ((stLista*)l)->tam == 0);
 }
 
-bool removeElementoLista(Lista lista, Conteudo chave) {
+bool removeElementoLista(Lista lista, void* chave) {
     if (lista == NULL || ((stLista*)lista)->inicio == NULL) return false;
 
     Celula atual = ((stLista*)lista)->inicio;
@@ -263,3 +263,11 @@ Celula getFinalLista(Lista l) {
     return ((stLista*)l)->fim;
 }
 
+
+Celula getFimLista(Lista l) {
+    return getFinalLista(l);
+}
+
+Celula getAntCelula(Celula c) {
+    return getAnteriorCelula(c);
+}

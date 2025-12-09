@@ -32,7 +32,7 @@ typedef void (*FuncaoDesalocacao)(void* elemento);
  */
 typedef int (*FuncaoComparacao)(const void* a, const void* b, void* contexto);
 
-/* ================= Criação e liberação ================= */
+
 
 /**
  * @brief Cria uma nova árvore binária de busca vazia.
@@ -59,7 +59,7 @@ void liberaArvoreBinaria(ArvoreBinaria arvore, FuncaoDesalocacao desalocar);
  */
 void limpaArvoreBinaria(ArvoreBinaria arvore, FuncaoDesalocacao desalocar);
 
-/* ================= Inserção e remoção ================= */
+
 
 /**
  * @brief Insere um elemento na árvore.
@@ -87,7 +87,7 @@ void removeNoArvore(ArvoreBinaria arvore, NoArvore no);
  */
 bool removeArvoreBinaria(ArvoreBinaria arvore, void* dado);
 
-/* ================= Busca ================= */
+
 
 /**
  * @brief Busca um elemento na árvore.
@@ -130,7 +130,7 @@ void* getMaiorElemento(ArvoreBinaria arvore);
  */
 void* getDadoNo(NoArvore no);
 
-/* ================= Utilitários ================= */
+
 
 /**
  * @brief Verifica se a árvore está vazia.
@@ -148,17 +148,11 @@ bool arvoreVazia(ArvoreBinaria arvore);
  */
 int tamanhoArvore(ArvoreBinaria arvore);
 
-/**
- * @brief Retorna a altura da árvore.
- * 
- * @param arvore Ponteiro para a árvore
- * @return Altura da árvore (0 para árvore vazia)
- */
-int alturaArvore(ArvoreBinaria arvore);
 
 
 
-/* ================= Conversão ================= */
+
+
 
 /**
  * @brief Converte a árvore em um array ordenado.

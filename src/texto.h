@@ -149,12 +149,12 @@ float calculoAreaTexto(TEXTO t);
  */
 void desalocaTexto(TEXTO t);
 
-
-
-
-#endif 
-
 /**
  * @brief Cria um clone do texto com novo ID e deslocamento.
  */
 TEXTO clonaTexto(TEXTO t, int novo_id, float dx, float dy);
+
+
+#endif 
+
+

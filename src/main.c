@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     char *caminho_qry     = obter_valor_opcao(argc, argv, "q");
     char *comando_sufixo  = obter_sufixo_comando(argc, argv);
 
-    // Variáveis para armazenar os caminhos completos
+   
     char *caminho_completo_geo    = NULL;
     char *caminho_completo_qry    = NULL;
 
@@ -68,30 +68,30 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Verifica se as opções obrigatórias foram passadas (-f e -o)
+   
     if (caminho_geo == NULL || caminho_output == NULL) {
         printf("Erro: -o e -f são obrigatórios\n");
         exit(1);
     }
 
-    // Cria os dados do arquivo GEO
+    
     DadosDoArquivo arqGeo = criar_dados_arquivo(caminho_geo);
     if (arqGeo == NULL) {
         printf("Erro na criação de dados do arquivo GEO\n");
         exit(1);
     }
 
-    // Executa os comandos do arquivo GEO
+    
     Cidade cidade = executa_comando_geo(arqGeo, caminho_output, comando_sufixo);
 
-    // Obtém o maior ID processado do arquivo GEO para uso no qry em clonagens 
+   
     int maior_id_geo = get_maior_id_geo(cidade);
 
-    // Obtém argumentos opcionais de ordenação
+    
     char *tipo_sort_str = obter_valor_opcao(argc, argv, "to");
     char *threshold_str = obter_valor_opcao(argc, argv, "i");
     
-    char tipo_sort = 'q'; // Default: Quick Sort
+    char tipo_sort = 'q'; 
     if (tipo_sort_str != NULL && (strcmp(tipo_sort_str, "m") == 0 || strcmp(tipo_sort_str, "q") == 0)) {
         tipo_sort = tipo_sort_str[0];
     }
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
         threshold = atoi(threshold_str);
     }
 
-    // Caso o arquivo QRY tenha sido passado, processa-o
+    
     if (caminho_qry != NULL) {
         DadosDoArquivo arqQry = criar_dados_arquivo(caminho_qry);
 
@@ -120,11 +120,11 @@ int main(int argc, char *argv[]) {
         desaloca_qry(qry);
     }
 
-    // Libera memória do arquivo GEO
+    
     destruir_dados_arquivo(arqGeo);
     desaloca_geo(cidade);
 
-    // Libera caminhos alocados dinamicamente
+   
     if (caminho_completo_geo != NULL)
         free(caminho_completo_geo);
 

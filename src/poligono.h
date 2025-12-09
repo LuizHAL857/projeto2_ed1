@@ -25,7 +25,7 @@ typedef void* BoundingBox;
  */
 typedef void* Forma;
 
-/* ================= Segmento - Criação e acesso ================= */
+
 
 /**
  * @brief Cria um novo segmento.
@@ -59,7 +59,7 @@ Ponto getSegmentoP1(Segmento s);
  */
 Ponto getSegmentoP2(Segmento s);
 
-/* ================= BoundingBox - Criação e acesso ================= */
+
 
 /**
  * @brief Cria um novo bounding box.
@@ -126,7 +126,7 @@ Poligono criaPoligono();
  */
 void liberaPoligono(Poligono p);
 
-/* ================= Inserção ================= */
+
 
 /**
  * @brief Insere um vértice no polígono.
@@ -144,7 +144,7 @@ void insereVertice(Poligono p, Ponto ponto);
  */
 void insereSegmento(Poligono p, Segmento seg);
 
-/* ================= Consultas ================= */
+
 
 /**
  * @brief Calcula e retorna o bounding box do polígono.

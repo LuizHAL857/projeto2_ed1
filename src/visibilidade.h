@@ -9,10 +9,10 @@
  * calcular a região de visibilidade a partir de um ponto observador em um ambiente
  * 2D com obstáculos representados por segmentos de linha (anteparos).
  *
- * O algoritmo utiliza uma árvore binária balanceada para manter os segmentos ativos
- * ordenados por distância ao observador, permitindo determinar eficientemente quais
- * pontos são visíveis e quais estão obstruídos.
- 
+ * O algoritmo segue a abordagem clássica de plane sweep:
+ * - Ordena vértices por ângulo em torno do observador
+ * - Mantém conjunto de segmentos ativos em árvore binária balanceada
+ * - Constrói incrementalmente a região de visibilidade
  */
 
 #include <stdbool.h>
@@ -24,24 +24,41 @@
  * @brief Tipo opaco que representa o contexto de visibilidade.
  *
  * Encapsula todas as informações necessárias para cálculos de visibilidade,
- * incluindo a posição do observador, os segmentos de obstáculos (anteparos)
- * e estruturas auxiliares para o algoritmo de varredura angular.
+ * incluindo a posição do observador, os segmentos de obstáculos (anteparos),
+ * estruturas auxiliares para o algoritmo de varredura angular, e a região
+ * de visibilidade calculada.
  */
 typedef void* ContextoVisibilidade;
+
+/**
+ * @typedef SegmentoVisibilidade
+ * @brief Tipo opaco que representa um segmento da região de visibilidade.
+ *
+ * Cada segmento delimita parte da fronteira da área visível a partir do
+ * ponto observador.
+ */
+typedef void* SegmentoVisibilidade;
 
 /**
  * @brief Cria um contexto de visibilidade para um observador.
  *
  * Inicializa todas as estruturas de dados necessárias para realizar cálculos
  * de visibilidade a partir de um ponto observador (bx, by). Extrai os anteparos
- * da lista de formas fornecida e prepara os eventos angulares para o algoritmo
- * de varredura.
+ * da lista de formas fornecida e executa o algoritmo de varredura angular para
+ * calcular a região de visibilidade.
+ *
+ * O algoritmo:
+ * 1. Cria retângulo envolvente
+ * 2. Traça raio inicial e divide segmentos interceptados
+ * 3. Ordena vértices por ângulo, distância e tipo
+ * 4. Executa varredura angular mantendo segmentos ativos
+ * 5. Constrói região de visibilidade V(x)
  *
  * @param bx Coordenada X do ponto observador (bomba).
  * @param by Coordenada Y do ponto observador (bomba).
  * @param formas Lista de formas geométricas contendo os anteparos (obstáculos).
  * @param tipo_sort Tipo de ordenação ('q' para quicksort, 'm' para mergesort).
- *                  Usado para ordenar eventos angulares.
+ *                  Usado para ordenar vértices por ângulo.
  * @param threshold Limiar para uso de insertion sort em sub-arrays pequenos.
  *                  Usado em conjunto com tipo_sort para otimização.
  *
@@ -51,7 +68,7 @@ typedef void* ContextoVisibilidade;
  *       após o uso para evitar vazamentos de memória.
  * @note Apenas formas do tipo ANTEPARO são consideradas como obstáculos.
  *
- * @see liberaContextoVisibilidade()
+ * 
  */
 ContextoVisibilidade criaContextoVisibilidade(
     float bx,
@@ -62,11 +79,49 @@ ContextoVisibilidade criaContextoVisibilidade(
 );
 
 /**
+ * @brief Retorna a região de visibilidade calculada.
+ *
+ * Retorna uma lista de segmentos que delimitam a área visível a partir do
+ * ponto observador. Cada segmento é do tipo SegmentoVisibilidade.
+ *
+ * @param C Contexto de visibilidade previamente criado.
+ *
+ * @return Lista de SegmentoVisibilidade* que formam a região de visibilidade,
+ *         ou NULL se o contexto for inválido.
+ *
+ * @note A lista retornada pertence ao contexto e será liberada automaticamente
+ *       quando liberaContextoVisibilidade() for chamado. Não libere a lista
+ *       manualmente.
+ * @note Os segmentos na lista estão ordenados conforme foram gerados durante
+ *       a varredura angular.
+ *
+ * @see criaContextoVisibilidade()
+ */
+Lista getRegiaoVisibilidade(ContextoVisibilidade C);
+
+/**
+ * @brief Obtém as coordenadas de um segmento de visibilidade.
+ *
+ * @param seg Segmento de visibilidade.
+ * @param x1 Ponteiro para armazenar coordenada X do ponto inicial.
+ * @param y1 Ponteiro para armazenar coordenada Y do ponto inicial.
+ * @param x2 Ponteiro para armazenar coordenada X do ponto final.
+ * @param y2 Ponteiro para armazenar coordenada Y do ponto final.
+ *
+ * @note Todos os ponteiros devem ser não-nulos.
+ */
+void getCoordenadasSegmentoVis(
+    SegmentoVisibilidade seg,
+    float* x1, float* y1,
+    float* x2, float* y2
+);
+
+/**
  * @brief Verifica se um ponto é visível a partir do observador.
  *
  * Determina se existe uma linha de visão desobstruída entre o observador
- * (definido no contexto) e o ponto (px, py). Utiliza o algoritmo de varredura
- * angular para verificar se algum segmento ativo bloqueia a visão.
+ * (definido no contexto) e o ponto (px, py). Utiliza a região de visibilidade
+ * previamente calculada para fazer a verificação.
  *
  * @param C Contexto de visibilidade previamente criado.
  * @param px Coordenada X do ponto a ser testado.
@@ -75,9 +130,9 @@ ContextoVisibilidade criaContextoVisibilidade(
  * @return true se o ponto é visível (não obstruído), false caso contrário.
  *
  * @note Um ponto coincidente com o observador é sempre considerado visível.
- * @note Pontos sobre segmentos de obstáculos são tratados como visíveis.
+ * @note A verificação usa ray casting na região de visibilidade calculada.
  *
- * @see formaVisivel()
+ * @see criaContextoVisibilidade()
  */
 bool pontoVisivel(
     ContextoVisibilidade C,
@@ -90,8 +145,9 @@ bool pontoVisivel(
  *
  * Desaloca todas as estruturas internas do contexto, incluindo:
  * - Array de segmentos
- * - Array de eventos angulares
- * - Árvores binárias auxiliares
+ * - Array de vértices ordenados
+ * - Árvore binária de segmentos ativos
+ * - Lista de segmentos da região de visibilidade
  * - Outras estruturas de dados temporárias
  *
  * @param C Contexto de visibilidade a ser liberado.

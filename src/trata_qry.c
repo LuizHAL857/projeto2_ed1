@@ -54,7 +54,7 @@ Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade,
     qry->threshold = threshold;
     qry->visibility_polygons = criaLista(); // Inicializa lista de polígonos de visibilidade
     
-    // Copia o caminho de output
+   
     qry->caminho_output = malloc(strlen(caminho_output) + 1);
     if (qry->caminho_output == NULL) {
         printf("Erro de alocação para caminho_output\n");
@@ -234,46 +234,33 @@ static void executa_comando_anteparo(Qry_t *qry, char *linha) {
 }
 
 static Poligono calculaPoligonoVisibilidade(ContextoVisibilidade ctx, float x, float y) {
-    int num_raios = 72; 
-    Poligono regiao_visibilidade = criaPoligono();
+    // Obtém a região de visibilidade como lista de segmentos
+    Lista segmentos_vis = getRegiaoVisibilidade(ctx);
     
+    if (!segmentos_vis || listaVazia(segmentos_vis)) {
+        return NULL;
+    }
+    
+    // Cria polígono a partir dos segmentos
+    
+    Poligono regiao_visibilidade = criaPoligono();
     if (!regiao_visibilidade) return NULL;
-
-    for (int i = 0; i < num_raios; i++) {
-        float angulo = -M_PI + (2.0 * M_PI * i / num_raios);
-        float dx = cos(angulo);
-        float dy = sin(angulo);
+    
+    // Adiciona todos os pontos iniciais dos segmentos
+    // Isso garante que toda a região visível seja coberta
+    for (Celula c = getInicioLista(segmentos_vis); c; c = getProxCelula(c)) {
+        SegmentoVisibilidade seg = getConteudoCelula(c);
+        float x1, y1, x2, y2;
+        getCoordenadasSegmentoVis(seg, &x1, &y1, &x2, &y2);
         
-        float min_dist = 0.0f;
-        float max_dist = 1000.0f;
-        float dist = max_dist;
-        
-        float px_far = x + dx * max_dist;
-        float py_far = y + dy * max_dist;
-        
-        if (!pontoVisivel(ctx, px_far, py_far)) {
-            
-            for (int iter = 0; iter < 32; iter++) { 
-                float mid_dist = (min_dist + max_dist) / 2.0f;
-                float px_mid = x + dx * mid_dist;
-                float py_mid = y + dy * mid_dist;
-                
-                if (pontoVisivel(ctx, px_mid, py_mid)) {
-                    min_dist = mid_dist;
-                } else {
-                    max_dist = mid_dist;
-                }
-            }
-            dist = min_dist;
-        }
-        
-        Ponto p = criaPonto(x + dx * dist, y + dy * dist);
-        insereVertice(regiao_visibilidade, p);
-        liberaPonto(p);
+        Ponto p1 = criaPonto(x1, y1);
+        insereVertice(regiao_visibilidade, p1);
+        liberaPonto(p1);
     }
     
     return regiao_visibilidade;
 }
+
 
 static void destroiFormasEmColisao(Lista lista_formas, Poligono regiao_visibilidade, Qry_t *qry) {
     Lista lista_svg = get_lista_svg_cidade(qry->cidade);
@@ -291,22 +278,25 @@ static void destroiFormasEmColisao(Lista lista_formas, Poligono regiao_visibilid
     );
     liberaBoundingBox(bb_poly_orig);
     
+    
     Lista formas_para_destruir = criaLista();
     
     // Coleta formas a destruir
     for (Celula c = getInicioLista(lista_formas); c; c = getProxCelula(c)) {
         Forma f = getConteudoCelula(c);
+        
         BoundingBox bb_forma = getBBForma(f);
         
         // Teste rápido: Bounding Box
         if (haInterseccaoBB(bb_poly, bb_forma)) {
-            // Teste preciso: verifica se o centro da forma está dentro do polígono
+            // Teste preciso: verifica se a forma intersecta o polígono
             if (formaIntersectaPoligono(regiao_visibilidade, f)) {
                 insereFinalLista(formas_para_destruir, f);
             }
         }
         liberaBoundingBox(bb_forma);
     }
+
 
     liberaBoundingBox(bb_poly);
     
@@ -594,7 +584,7 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
     printf("  Comando CLONAGEM: x=%.2f, y=%.2f, dx=%.2f, dy=%.2f, sufixo=%s\n", 
            x, y, dx, dy, sufixo);
     
-    // 1. Criar contexto de visibilidade
+    // Criar contexto de visibilidade
     Lista lista_formas = get_lista_cidade(qry->cidade);
     Lista lista_svg = get_lista_svg_cidade(qry->cidade);
     Lista lista_free = obtem_lista_para_desalocar(qry->cidade);
@@ -607,11 +597,11 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
         return;
     }
     
-    // 2. Calcular polígono de visibilidade
+    // Calcular polígono de visibilidade
     Poligono regiao_visibilidade = calculaPoligonoVisibilidade(ctx, x, y);
     
     if (regiao_visibilidade) {
-        // 3. Identificar formas visíveis e cloná-las
+        //Identificar formas visíveis e cloná-las
         if (qry->txt_file) {
             fprintf(qry->txt_file, "\nBomba de clonagem em (%.2f, %.2f) com deslocamento (%.2f, %.2f):\n", 
                     x, y, dx, dy);
@@ -645,11 +635,11 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
                     int id_clone = ++qry->maior_id_atual;
                     char *tipo_str = "Desconhecido";
 
-                    // Clona a forma usando a função do módulo forma
+                   
                     Forma clone_forma = clonaForma(f, id_clone, dx, dy);
                     
                     if (clone_forma != NULL) {
-                        // Obtém ID original e nome do tipo para logging
+                        // Obtém ID original e nome do tipo
                         switch(tipo) {
                             case CIRCLE:
                                 id_original = getIDCirculo(data);
@@ -701,7 +691,7 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
             fprintf(qry->txt_file, "Total de formas clonadas: %d\n", count);
         }
         
-        // 4. Gerar SVG da região de visibilidade
+        //Gerar SVG da região de visibilidade
         geraSVGVisibilidade(regiao_visibilidade, x, y, sufixo, qry);
         
         // Só libera o polígono se não foi armazenado para renderização posterior
@@ -751,16 +741,86 @@ static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData) {
         return;
     }
     
+    // Calcula o bounding box de todas as formas para definir o viewBox
+    Lista lista_formas = get_lista_cidade(qry->cidade);
+    float min_x = INFINITY, min_y = INFINITY;
+    float max_x = -INFINITY, max_y = -INFINITY;
+    bool has_shapes = false;
+    
+    Celula aux = getInicioLista(lista_formas);
+    while (aux != NULL) {
+        Forma f = getConteudoCelula(aux);
+        BoundingBox bb = getBBForma(f);
+        if (bb != NULL) {
+            has_shapes = true;
+            float bb_min_x = getBBMinX(bb);
+            float bb_min_y = getBBMinY(bb);
+            float bb_max_x = getBBMaxX(bb);
+            float bb_max_y = getBBMaxY(bb);
+            
+            if (bb_min_x < min_x) min_x = bb_min_x;
+            if (bb_min_y < min_y) min_y = bb_min_y;
+            if (bb_max_x > max_x) max_x = bb_max_x;
+            if (bb_max_y > max_y) max_y = bb_max_y;
+            
+            liberaBoundingBox(bb);
+        }
+        aux = getProxCelula(aux);
+    }
+    
+    // Também considera os polígonos de visibilidade
+    if (!listaVazia(qry->visibility_polygons)) {
+        typedef struct {
+            Poligono poligono;
+            float bomb_x;
+            float bomb_y;
+        } VisibilityData;
+        
+        for (Celula c = getInicioLista(qry->visibility_polygons); c; c = getProxCelula(c)) {
+            VisibilityData* vis_data = (VisibilityData*)getConteudoCelula(c);
+            BoundingBox bb = getBoundingBox(vis_data->poligono);
+            if (bb != NULL) {
+                has_shapes = true;
+                float bb_min_x = getBBMinX(bb);
+                float bb_min_y = getBBMinY(bb);
+                float bb_max_x = getBBMaxX(bb);
+                float bb_max_y = getBBMaxY(bb);
+                
+                if (bb_min_x < min_x) min_x = bb_min_x;
+                if (bb_min_y < min_y) min_y = bb_min_y;
+                if (bb_max_x > max_x) max_x = bb_max_x;
+                if (bb_max_y > max_y) max_y = bb_max_y;
+                
+                liberaBoundingBox(bb);
+            }
+        }
+    }
+    
+    // Define valores padrão se não houver formas
+    if (!has_shapes) {
+        min_x = 0;
+        min_y = 0;
+        max_x = 1000;
+        max_y = 1000;
+    }
+    
+    // Adiciona margem ao viewBox
+    float margem = 50.0f;
+    float vb_x = min_x - margem;
+    float vb_y = min_y - margem;
+    float vb_w = (max_x - min_x) + 2 * margem;
+    float vb_h = (max_y - min_y) + 2 * margem;
    
     fprintf(file, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    fprintf(file, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\">\n");
+    fprintf(file, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"%.2f %.2f %.2f %.2f\">\n",
+            vb_x, vb_y, vb_w, vb_h);
     
    
     Lista lista_svg_temp = criaLista();
     
    
-    Lista lista_formas = get_lista_cidade(qry->cidade);
-    Celula aux = getInicioLista(lista_formas);
+    // Reutiliza lista_formas e aux já declarados anteriormente
+    aux = getInicioLista(lista_formas);
     while (aux != NULL) {
         Forma f = getConteudoCelula(aux);
         insereFinalLista(lista_svg_temp, f);
