@@ -56,7 +56,7 @@ char* getCorAnteparo(Anteparo a);
 /**
  * @brief Define a cor do anteparo
  */
-void setCorAnteparo(Anteparo a, char* nova_cor);
+void setCorAnteparo(Anteparo a, const char* nova_cor);
 
 /**
  * @brief Cria um clone do anteparo com novo ID e deslocamento.

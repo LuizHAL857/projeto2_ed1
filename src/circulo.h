@@ -144,7 +144,7 @@ void setRaioCirculo(CIRCULO c, float raio);
  * @param c Ponteiro para o círculo.
  * @param corB Nova cor da borda (string).
  */
-void setCorBCirculo(CIRCULO c, char* corB);
+void setCorBCirculo(CIRCULO c, const char* corB);
 
 
 /**
@@ -153,7 +153,7 @@ void setCorBCirculo(CIRCULO c, char* corB);
  * @param c Ponteiro para o círculo.
  * @param corP Nova cor de preenchimento (string).
  */
-void setCorPCirculo(CIRCULO c, char* corP);
+void setCorPCirculo(CIRCULO c, const char* corP);
 
 
 

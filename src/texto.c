@@ -216,7 +216,7 @@ void setYTexto(TEXTO t, float y){
     tTemp->y = y;
 }
 
-void setCorBTexto(TEXTO t, char *corB){
+void setCorBTexto(TEXTO t, const char *corB){
 
     texto *tTemp = ((texto*)t);
 
@@ -234,7 +234,7 @@ void setCorBTexto(TEXTO t, char *corB){
     strcpy(tTemp->corB, corB);
 }
 
-void setCorPTexto(TEXTO t, char *corP){
+void setCorPTexto(TEXTO t, const char *corP){
 
     texto *tTemp = ((texto*)t);
 

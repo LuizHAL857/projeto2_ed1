@@ -62,31 +62,43 @@ Qry executa_comando_qry(DadosDoArquivo fileData, Cidade cidade,
     }
     strcpy(qry->caminho_output, caminho_output);
     
-   
-    char *nome_orig = obter_nome_arquivo(fileData);
-    char *nome_base = strrchr(nome_orig, '/');
-    if(nome_base) nome_base++; else nome_base = nome_orig;
+   // Cria arquivo TXT com formato (geo)-(qry).txt
+    char *nome_geo = get_nome_geo_cidade(cidade);
+    char *nome_orig_qry = obter_nome_arquivo(fileData);
+    char *nome_base_qry = strrchr(nome_orig_qry, '/');
+    if(nome_base_qry) nome_base_qry++; else nome_base_qry = nome_orig_qry;
     
-    char *nome_arq = malloc(strlen(nome_base) + 5);
-    if(nome_arq) {
-        strcpy(nome_arq, nome_base);
-        char *dot = strrchr(nome_arq, '.');
+    // Remove extensão do QRY
+    char *nome_qry = malloc(strlen(nome_base_qry) + 1);
+    if(nome_qry) {
+        strcpy(nome_qry, nome_base_qry);
+        char *dot = strrchr(nome_qry, '.');
         if(dot) *dot = '\0';
-        strcat(nome_arq, ".txt");
         
-        char *path = malloc(strlen(caminho_output) + strlen(nome_arq) + 2);
-        if(path) {
-            sprintf(path, "%s/%s", caminho_output, nome_arq);
-            qry->txt_file = fopen(path, "w");
-            if (qry->txt_file == NULL) {
-                printf("Erro ao criar arquivo TXT: %s\n", path);
+        // Monta nome: (geo)-(qry).txt
+        char *nome_arq = malloc(strlen(nome_geo) + strlen(nome_qry) + 10);
+        if(nome_arq) {
+            strcpy(nome_arq, nome_geo);
+            strcat(nome_arq, "-");
+            strcat(nome_arq, nome_qry);
+            strcat(nome_arq, ".txt");
+            
+            char *path = malloc(strlen(caminho_output) + strlen(nome_arq) + 2);
+            if(path) {
+                sprintf(path, "%s/%s", caminho_output, nome_arq);
+                qry->txt_file = fopen(path, "w");
+                if (qry->txt_file == NULL) {
+                    printf("Erro ao criar arquivo TXT: %s\n", path);
+                }
+                free(path);
             }
-            free(path);
+            free(nome_arq);
         }
-        free(nome_arq);
+        free(nome_qry);
     } else {
         qry->txt_file = NULL;
     }
+
     
     
     while (!listaVazia(obter_lista_linhas(fileData))) {
@@ -234,6 +246,9 @@ static void executa_comando_anteparo(Qry_t *qry, char *linha) {
 }
 
 static Poligono calculaPoligonoVisibilidade(ContextoVisibilidade ctx, float x, float y) {
+    (void)x; 
+    (void)y; 
+    
     // Obtém a região de visibilidade como lista de segmentos
     Lista segmentos_vis = getRegiaoVisibilidade(ctx);
     
@@ -356,20 +371,37 @@ static void geraSVGVisibilidade(Poligono regiao_visibilidade, float x, float y, 
         return;
     }
 
-    char *nome_orig = obter_nome_arquivo(qry->fileData);
-    char *nome_base = strrchr(nome_orig, '/');
-    if(nome_base) nome_base++; else nome_base = nome_orig;
     
-    char *nome_arq = malloc(strlen(nome_base) + strlen(sufixo) + 10);
-    if (!nome_arq) return;
-
-    strcpy(nome_arq, nome_base);
-    char *dot = strrchr(nome_arq, '.');
+    char *nome_geo = get_nome_geo_cidade(qry->cidade);
+    if (!nome_geo) return;
+    
+    char *nome_orig_qry = obter_nome_arquivo(qry->fileData);
+    char *nome_base_qry = strrchr(nome_orig_qry, '/');
+    if(nome_base_qry) nome_base_qry++; else nome_base_qry = nome_orig_qry;
+    
+    
+    char *nome_qry = malloc(strlen(nome_base_qry) + 1);
+    if (!nome_qry) return;
+    strcpy(nome_qry, nome_base_qry);
+    char *dot = strrchr(nome_qry, '.');
     if(dot) *dot = '\0';
     
+    
+    char *nome_arq = malloc(strlen(nome_geo) + strlen(nome_qry) + strlen(sufixo) + 10);
+    if (!nome_arq) {
+        free(nome_qry);
+        return;
+    }
+
+    // Monta o nome: (geo)-(qry)-(suffix).svg
+    strcpy(nome_arq, nome_geo);
+    strcat(nome_arq, "-");
+    strcat(nome_arq, nome_qry);
     strcat(nome_arq, "-");
     strcat(nome_arq, sufixo);
     strcat(nome_arq, ".svg");
+    
+    free(nome_qry);
     
     char *path = malloc(strlen(qry->caminho_output) + strlen(nome_arq) + 2);
     if (path) {
@@ -407,6 +439,7 @@ static void geraSVGVisibilidade(Poligono regiao_visibilidade, float x, float y, 
     }
     free(nome_arq);
 }
+
 
 static void executa_comando_destruicao(Qry_t *qry, char *linha) {
     strtok(linha, " ");
@@ -704,40 +737,44 @@ static void executa_comando_clonagem(Qry_t *qry, char *linha) {
 }
 
 static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData) {
-    char *nome_orig = obter_nome_arquivo(fileData);
-    char *nome_base = strrchr(nome_orig, '/');
-    if(nome_base) nome_base++; else nome_base = nome_orig;
     
-    size_t name_len = strlen(nome_base);
-    char *nome_arquivo = malloc(name_len + 1);
-    if (nome_arquivo == NULL) {
+    char *nome_geo = get_nome_geo_cidade(qry->cidade);
+    
+    char *nome_orig_qry = obter_nome_arquivo(fileData);
+    char *nome_base_qry = strrchr(nome_orig_qry, '/');
+    if(nome_base_qry) nome_base_qry++; else nome_base_qry = nome_orig_qry;
+    
+    // Remove extensão do QRY
+    size_t name_len = strlen(nome_base_qry);
+    char *nome_qry = malloc(name_len + 1);
+    if (nome_qry == NULL) {
         printf("Erro de alocação\n");
         return;
     }
     
-    strcpy(nome_arquivo, nome_base);
-    char *dot = strrchr(nome_arquivo, '.');
+    strcpy(nome_qry, nome_base_qry);
+    char *dot = strrchr(nome_qry, '.');
     if (dot) *dot = '\0';
     
     size_t caminho_len = strlen(qry->caminho_output);
-    size_t nome_len_final = strlen(nome_arquivo);
-    size_t total_len = caminho_len + 1 + nome_len_final + 5; 
+    size_t nome_len_final = strlen(nome_geo) + 1 + strlen(nome_qry); 
+    size_t total_len = caminho_len + 1 + nome_len_final + 5; // +1 for '/', +5 for ".svg\0"
     
     char *caminho_output_arquivo = malloc(total_len);
     if (caminho_output_arquivo == NULL) {
         printf("Erro de alocação\n");
-        free(nome_arquivo);
+        free(nome_qry);
         return;
     }
     
-    snprintf(caminho_output_arquivo, total_len, "%s/%s.svg", qry->caminho_output, nome_arquivo);
+    // Monta o caminho: output/(geo)-(qry).svg
+    snprintf(caminho_output_arquivo, total_len, "%s/%s-%s.svg", qry->caminho_output, nome_geo, nome_qry);
     
-    
+    free(nome_qry);
     FILE *file = fopen(caminho_output_arquivo, "w");
     if (file == NULL) {
         printf("Erro ao criar arquivo SVG: %s\n", caminho_output_arquivo);
         free(caminho_output_arquivo);
-        free(nome_arquivo);
         return;
     }
     
@@ -868,7 +905,6 @@ static void cria_svg_qry(Qry_t *qry, DadosDoArquivo fileData) {
     
     liberaLista(lista_svg_temp);
     free(caminho_output_arquivo);
-    free(nome_arquivo);
 }
 
 void desaloca_qry(Qry qry) {

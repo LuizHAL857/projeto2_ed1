@@ -1,0 +1,94 @@
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c anteparo.c -o anteparo.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c arvore_binaria.c -o arvore_binaria.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c circulo.c -o circulo.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c forma.c -o forma.o
+forma.c: In function ‘formaEstaDentro’:
+forma.c:235:5: warning: enumeration value ‘TEXT_STYLE’ not handled in switch [-Wswitch]
+  235 |     switch(tipo) {
+      |     ^~~~~~
+forma.c: In function ‘setCorPForma’:
+forma.c:408:34: warning: passing argument 2 of ‘setCorPCirculo’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  408 |             setCorPCirculo(data, cor);
+      |                                  ^~~
+In file included from forma.c:2:
+circulo.h:156:38: note: expected ‘char *’ but argument is of type ‘const char *’
+  156 | void setCorPCirculo(CIRCULO c, char* corP);
+      |                                ~~~~~~^~~~
+forma.c:411:36: warning: passing argument 2 of ‘setCorPRetangulo’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  411 |             setCorPRetangulo(data, cor);
+      |                                    ^~~
+In file included from forma.c:3:
+retangulo.h:125:42: note: expected ‘char *’ but argument is of type ‘const char *’
+  125 | void setCorPRetangulo(RETANGULO r, char *corP);
+      |                                    ~~~~~~^~~~
+forma.c:414:32: warning: passing argument 2 of ‘setCorPTexto’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  414 |             setCorPTexto(data, cor);
+      |                                ^~~
+In file included from forma.c:5:
+texto.h:122:34: note: expected ‘char *’ but argument is of type ‘const char *’
+  122 | void setCorPTexto(TEXTO t, char* corP);
+      |                            ~~~~~~^~~~
+forma.c: In function ‘setCorBForma’:
+forma.c:429:34: warning: passing argument 2 of ‘setCorBCirculo’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  429 |             setCorBCirculo(data, cor);
+      |                                  ^~~
+circulo.h:147:38: note: expected ‘char *’ but argument is of type ‘const char *’
+  147 | void setCorBCirculo(CIRCULO c, char* corB);
+      |                                ~~~~~~^~~~
+forma.c:432:36: warning: passing argument 2 of ‘setCorBRetangulo’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  432 |             setCorBRetangulo(data, cor);
+      |                                    ^~~
+retangulo.h:117:42: note: expected ‘char *’ but argument is of type ‘const char *’
+  117 | void setCorBRetangulo(RETANGULO r, char *corB);
+      |                                    ~~~~~~^~~~
+forma.c:435:31: warning: passing argument 2 of ‘setCorLinha’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  435 |             setCorLinha(data, cor);
+      |                               ^~~
+In file included from forma.c:4:
+linha.h:122:33: note: expected ‘char *’ but argument is of type ‘const char *’
+  122 | void setCorLinha(LINHA l, char* cor);
+      |                           ~~~~~~^~~
+forma.c:438:32: warning: passing argument 2 of ‘setCorBTexto’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  438 |             setCorBTexto(data, cor);
+      |                                ^~~
+texto.h:117:34: note: expected ‘char *’ but argument is of type ‘const char *’
+  117 | void setCorBTexto(TEXTO t, char* corB);
+      |                            ~~~~~~^~~~
+forma.c:441:34: warning: passing argument 2 of ‘setCorAnteparo’ discards ‘const’ qualifier from pointer target type [-Wdiscarded-qualifiers]
+  441 |             setCorAnteparo(data, cor);
+      |                                  ^~~
+In file included from forma.c:7:
+anteparo.h:59:39: note: expected ‘char *’ but argument is of type ‘const char *’
+   59 | void setCorAnteparo(Anteparo a, char* nova_cor);
+      |                                 ~~~~~~^~~~~~~~
+forma.c: In function ‘formaEstaDentro’:
+forma.c:366:1: warning: control reaches end of non-void function [-Wreturn-type]
+  366 | }
+      | ^
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c leitor_arquivos.c -o leitor_arquivos.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c linha.c -o linha.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c lista.c -o lista.o
+lista.c: In function ‘removeCelula’:
+lista.c:175:50: warning: unused parameter ‘liberarConteudo’ [-Wunused-parameter]
+  175 | void removeCelula(Lista lista, Celula alvo, bool liberarConteudo) {
+      |                                                  ^
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c main.c -o main.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c poligono.c -o poligono.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c ponto.c -o ponto.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c retangulo.c -o retangulo.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c sort.c -o sort.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c texto.c -o texto.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c text_style.c -o text_style.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c trata_argumentos.c -o trata_argumentos.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c trata_geo.c -o trata_geo.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c trata_qry.c -o trata_qry.o
+trata_qry.c: In function ‘calculaPoligonoVisibilidade’:
+trata_qry.c:236:77: warning: unused parameter ‘x’ [-Wunused-parameter]
+  236 | static Poligono calculaPoligonoVisibilidade(ContextoVisibilidade ctx, float x, float y) {
+      |                                                                       ~~~~~~^
+trata_qry.c:236:86: warning: unused parameter ‘y’ [-Wunused-parameter]
+  236 | static Poligono calculaPoligonoVisibilidade(ContextoVisibilidade ctx, float x, float y) {
+      |                                                                                ~~~~~~^
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack -I. -c visibilidade.c -o visibilidade.o
+gcc -std=c99 -fstack-protector-all -Wall -Wextra -O0 -g -ggdb -Wa,--noexecstack ./anteparo.o ./arvore_binaria.o ./circulo.o ./forma.o ./leitor_arquivos.o ./linha.o ./lista.o ./main.o ./poligono.o ./ponto.o ./retangulo.o ./sort.o ./texto.o ./text_style.o ./trata_argumentos.o ./trata_geo.o ./trata_qry.o ./visibilidade.o -L./lib -lm -o ted
+/usr/bin/ld: warning: ./arvore_binaria.o: requires executable stack (because the .note.GNU-stack section is executable)

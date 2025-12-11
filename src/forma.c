@@ -312,6 +312,10 @@ bool formaEstaDentro(Poligono p, Forma f) {
             return resultado;
         }
             
+        case TEXT_STYLE:
+            
+            return false;
+            
         case ANTEPARO: {
             // Para anteparos, verifica múltiplos pontos ao longo do segmento
             float p1_x = getX1Anteparo(data);
@@ -360,9 +364,10 @@ bool formaEstaDentro(Poligono p, Forma f) {
             
             return false;
         }
-            
-            return false;
     }
+    
+    // Default: retorna false para tipos desconhecidos
+    return false;
 }
 
 Forma clonaForma(Forma f, int novo_id, float dx, float dy) {

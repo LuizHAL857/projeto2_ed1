@@ -130,7 +130,7 @@ void setY2Linha(LINHA l, float y2){
     lTemp->y2 = y2;
 }
 
-void setCorLinha(LINHA l, char* cor){
+void setCorLinha(LINHA l, const char* cor){
 
     linha *lTemp = ((linha*)l);
 

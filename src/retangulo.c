@@ -143,7 +143,7 @@ void setLarguraRetangulo(RETANGULO r, float largura){
     rTemp->largura = largura;
 }
 
-void setCorBRetangulo(RETANGULO r, char* corB){
+void setCorBRetangulo(RETANGULO r, const char* corB){
 
     retangulo *rTemp = ((retangulo*)r);
 
@@ -160,7 +160,7 @@ void setCorBRetangulo(RETANGULO r, char* corB){
     strcpy(rTemp->corB, corB);
 }
 
-void setCorPRetangulo(RETANGULO r, char* corP){
+void setCorPRetangulo(RETANGULO r, const char* corP){
 
     retangulo *rTemp = ((retangulo*)r);
 

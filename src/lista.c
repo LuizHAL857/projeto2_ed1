@@ -173,6 +173,7 @@ bool searchAndRemoveLista(Lista lista, void* chave) {
 }
 
 void removeCelula(Lista lista, Celula alvo, bool liberarConteudo) {
+    (void)liberarConteudo; 
     if (alvo == NULL) return;
 
     // Atualizar ponteiro anterior

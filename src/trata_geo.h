@@ -87,4 +87,12 @@ Lista obtem_lista_para_desalocar(Cidade cidade);
  */
 int get_maior_id_geo(Cidade cidade);
 
+/**
+ * @brief Retorna o nome do arquivo GEO (sem extensão).
+ * 
+ * @param cidade Contexto de execução retornado por `executa_comando_geo`.
+ * @return String com o nome do arquivo GEO sem extensão.
+ */
+char* get_nome_geo_cidade(Cidade cidade);
+
 #endif 

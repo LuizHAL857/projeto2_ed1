@@ -114,7 +114,7 @@ void setYRetangulo(RETANGULO r, float y);
  * @param r Retângulo.
  * @param corB Nova cor da borda (string).
  */
-void setCorBRetangulo(RETANGULO r, char *corB);
+void setCorBRetangulo(RETANGULO r, const char *corB);
 
 /**
  * @brief Define uma nova cor de preenchimento para o retângulo.
@@ -122,7 +122,7 @@ void setCorBRetangulo(RETANGULO r, char *corB);
  * @param r Retângulo.
  * @param corP Nova cor de preenchimento (string).
  */
-void setCorPRetangulo(RETANGULO r, char *corP);
+void setCorPRetangulo(RETANGULO r, const char *corP);
 
 /**
  * @brief Calcula a área do retângulo.

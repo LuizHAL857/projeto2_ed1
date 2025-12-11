@@ -130,7 +130,7 @@ void setRaioCirculo(CIRCULO c, float raio){
 
 }
 
-void setCorBCirculo(CIRCULO c, char *corB){
+void setCorBCirculo(CIRCULO c, const char *corB){
 
     circulo *cTemp = ((circulo*)c);
     free(cTemp->corB);
@@ -146,7 +146,7 @@ void setCorBCirculo(CIRCULO c, char *corB){
     strcpy(cTemp->corB, corB);
 }
 
-void setCorPCirculo(CIRCULO c, char *corP){
+void setCorPCirculo(CIRCULO c, const char *corP){
 
     circulo *cTemp = ((circulo*)c);
     free(cTemp->corP);

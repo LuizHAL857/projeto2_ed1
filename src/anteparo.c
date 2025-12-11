@@ -303,7 +303,7 @@ Anteparo transforma_retangulo_em_anteparos(void* forma_original, int *maior_id, 
   return transforma_retangulo(forma, maior_id, anteparos);
 }
 
-void setCorAnteparo(Anteparo a, char* nova_cor){
+void setCorAnteparo(Anteparo a, const char* nova_cor){
   if(a == NULL || nova_cor == NULL) return;
   
   Anteparo_T* aTemp = ((Anteparo_T*)a);

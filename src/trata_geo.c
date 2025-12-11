@@ -20,6 +20,7 @@ typedef struct
     Lista lista_para_free;
     Lista lista_svg;
     int maior_id;  // Armazena o maior ID encontrado durante o processamento
+    char* nome_geo;  // Armazena o nome do arquivo GEO
 
 }Cidade_t;
 
@@ -55,6 +56,18 @@ Cidade executa_comando_geo(DadosDoArquivo fileData,  char *caminho_output,  char
     cidade->lista_para_free = criaLista();
     cidade->lista_svg = criaLista();
     cidade->maior_id = 0;  // Inicializa o maior ID como 0
+    
+    // Armazena o nome do arquivo GEO
+    char *nome_orig = obter_nome_arquivo(fileData);
+    char *nome_base = strrchr(nome_orig, '/');
+    if(nome_base) nome_base++; else nome_base = nome_orig;
+    
+    cidade->nome_geo = malloc(strlen(nome_base) + 1);
+    if (cidade->nome_geo) {
+        strcpy(cidade->nome_geo, nome_base);
+        char *dot = strrchr(cidade->nome_geo, '.');
+        if(dot) *dot = '\0';  // Remove a extensão
+    }
 
     while(!listaVazia(obter_lista_linhas(fileData))){
 
@@ -146,6 +159,9 @@ void desaloca_geo(Cidade cidade){
 
     }
     liberaLista(chao_t->lista_para_free);
+    if (chao_t->nome_geo) {
+        free(chao_t->nome_geo);
+    }
     free(cidade);
 
 }
@@ -432,3 +448,7 @@ int get_maior_id_geo(Cidade cidade) {
     return chao_t->maior_id;
 }
 
+char* get_nome_geo_cidade(Cidade cidade) {
+    Cidade_t *chao_t = (Cidade_t *)cidade;
+    return chao_t->nome_geo;
+}

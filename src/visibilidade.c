@@ -52,15 +52,6 @@ typedef struct {
 } CtxVis;
 
 
-//função que calcula o determinante
-static float area2(Ponto2D x, Ponto2D y, Ponto2D z) {
-    return (y.x - x.x) * (z.y - x.y) - (y.y - x.y) * (z.x - x.x);
-}
-
-static bool viradaDireita(Ponto2D x, Ponto2D y, Ponto2D z) {
-    return area2(x, y, z) < -EPSILON;
-}
-
 
 
 static float distancia(Ponto2D a, Ponto2D b) {
@@ -71,6 +62,12 @@ static float distancia(Ponto2D a, Ponto2D b) {
 
 static float angulo(Ponto2D origem, Ponto2D p) {
     return atan2(p.y - origem.y, p.x - origem.x);
+}
+
+static float normalizar_angulo(float ang) {
+    while (ang < 0) ang += 2 * M_PI;
+    while (ang >= 2 * M_PI) ang -= 2 * M_PI;
+    return ang;
 }
 
 
@@ -267,9 +264,26 @@ ContextoVisibilidade criaContextoVisibilidade(float x, float y, Lista formas,
         idx++;
     }
     
-    //Orienta segmentos 
+    //Orienta segmentos: menor ângulo = INICIO, maior ângulo = FIM
     for (int i = 0; i < ctx->n_segmentos; i++) {
-        if (viradaDireita(ctx->x, ctx->segmentos[i].pto_ini, ctx->segmentos[i].pto_fim)) {
+        float ang1 = normalizar_angulo(angulo(ctx->x, ctx->segmentos[i].pto_ini));
+        float ang2 = normalizar_angulo(angulo(ctx->x, ctx->segmentos[i].pto_fim));
+        
+        // Se ang1 > ang2, troca para que pto_ini tenha o menor ângulo
+        // Também trata o caso de wrap-around (quando |ang1 - ang2| > PI)
+        bool deve_trocar = false;
+        
+        if (fabs(ang1 - ang2) > M_PI) {
+            // Cruzando o ângulo zero: o maior ângulo é na verdade o "início"
+            // Então se ang1 < ang2, ang1 está perto de 0, ang2 perto de 2PI
+            // Neste caso, ang2 é o início real
+            deve_trocar = (ang1 < ang2);
+        } else {
+            // Caso normal: menor ângulo é início
+            deve_trocar = (ang1 > ang2);
+        }
+        
+        if (deve_trocar) {
             Ponto2D temp = ctx->segmentos[i].pto_ini;
             ctx->segmentos[i].pto_ini = ctx->segmentos[i].pto_fim;
             ctx->segmentos[i].pto_fim = temp;

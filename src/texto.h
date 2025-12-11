@@ -114,12 +114,12 @@ void setYTexto(TEXTO t, float y);
 /**
  * @brief Define a cor da borda do texto.
  */
-void setCorBTexto(TEXTO t, char* corB);
+void setCorBTexto(TEXTO t, const char* corB);
 
 /**
  * @brief Define a cor de preenchimento do texto.
  */
-void setCorPTexto(TEXTO t, char* corP);
+void setCorPTexto(TEXTO t, const char* corP);
 
 /**
  * @brief Define o caractere de âncora do texto.

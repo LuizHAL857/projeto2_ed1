@@ -119,7 +119,7 @@ void setY2Linha(LINHA l, float y2);
  * @param l Ponteiro para a linha.
  * @param cor Nova cor (string).
  */
-void setCorLinha(LINHA l, char* cor);
+void setCorLinha(LINHA l, const char* cor);
 
 /**
  * @brief Calcula a "área" associada à linha.
